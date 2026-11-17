@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}POS Billing Terminal{% endblock %}
+{% block page_title %}Supermarket POS Terminal{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pos-item-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.75rem;
+        max-height: 480px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .pos-quick-card {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.75rem 0.6rem;
+        cursor: pointer;
+        background: var(--card-bg);
+        transition: all 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 110px;
+    }
+    .pos-quick-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-container">
+    <!-- Left Column: Barcode Scanning, Search & Quick Grid -->
+    <div class="pos-catalog">
+        <!-- Scanner & Search Bar -->
+        <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+            <!-- Camera Scanner Toggle Button -->
+            <button class="btn btn-outline-primary fw-semibold d-flex align-items-center gap-2" id="btn-start-camera">
+                <i class="bi bi-camera fs-5"></i>
+                <span>Scan Product (Camera)</span>
+            </button>
+
+            <!-- Manual Barcode Input (or USB Scanner Gun) -->
+            <div class="input-group" style="flex: 1 1 200px;">
+                <span class="input-group-text bg-light"><i class="bi bi-upc-scan text-muted"></i></span>
+                <input type="text" id="manual-barcode-input" class="form-control font-monospace" placeholder="Enter / Scan Barcode (Press Enter)" autofocus autocomplete="off">
+            </div>
+
+            <!-- Live Product Search Dropdown -->
+            <div class="position-relative" style="flex: 1 1 220px;">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="live-search-input" class="form-control" placeholder="Search product name..." autocomplete="off">
+                </div>
+                <div id="search-results-dropdown" class="list-group position-absolute w-100 shadow-lg d-none" style="z-index: 1050; max-height: 280px; overflow-y: auto; top: 40px;"></div>
+            </div>
+        </div>
+
+        <!-- Camera Scanner Live Stream Wrapper (collapsible) -->
+        <div id="scanner-modal-wrapper" class="card border border-primary bg-black mb-3 d-none">
+            <div class="card-header bg-dark text-white py-1 px-3 d-flex justify-content-between align-items-center">
+                <small class="fw-semibold text-success"><i class="bi bi-record-circle-fill text-danger me-1"></i> Live Camera Scanner</small>
+                <small class="text-white-50" id="scanner-status-text">Align barcode in target box</small>
+            </div>
+            <div class="p-2 position-relative d-flex justify-content-center">
+                <div id="reader" style="width: 100%; max-width: 460px; min-height: 250px;"></div>
+                <div class="scanner-overlay-aim"></div>
+            </div>
+            <div class="card-footer bg-dark text-white-50 py-1 px-3 d-flex justify-content-between align-items-center" style="font-size: 0.72rem;">
+                <span>Supports Smartphones (rear camera) &amp; Laptops</span>
+                <span>Requires HTTPS or localhost</span>
+            </div>
+        </div>
+
+        <!-- Quick Item Selector Grid -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0 text-dark-emphasis small text-uppercase"><i class="bi bi-grid-3x3-gap text-primary me-1"></i> Quick Add Catalog</h6>
+            <small class="text-muted">Click any item to add directly to cart</small>
+        </div>
+
+        <div class="pos-item-grid">
+            {% for prod in popular_products %}
+            <div class="pos-quick-card" onclick='addProductToCart({{ prod.to_dict()|tojson }})'>
+                <div>
+                    <div class="fw-semibold small text-truncate" title="{{ prod.name }}">{{ prod.name }}</div>
+                    <small class="text-muted" style="font-size: 0.7rem;">Stock: {{ prod.current_stock }} {{ prod.unit_of_measure }}</small>
+                </div>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top border-light">
+                    <span class="badge bg-primary-subtle text-primary fw-bold" style="font-size: 0.8rem;">${{ "%.2f"|format(prod.selling_price) }}</span>
+                    <i class="bi bi-plus-circle text-primary"></i>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Column: Real-Time Cart & Checkout -->
+    <div class="pos-cart">
+        <!-- Cart Header -->
+        <div class="d-flex justify-content-between align-items-center pb-2">
+            <div>
+                <h5 class="fw-bold mb-0"><i class="bi bi-cart3 text-primary me-1"></i> Current Bill</h5>
+                <small class="text-muted" id="cart-item-count">0 items</small>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" id="btn-clear-cart" title="Clear Entire Cart">
+                <i class="bi bi-trash me-1"></i> Clear
+            </button>
+        </div>
+
+        <!-- Cart Items Scroll List -->
+        <div class="pos-cart-items" id="cart-items-container">
+            <!-- Dynamically populated via billing.js -->
+        </div>
+
+        <div id="cart-empty-state" class="text-center py-5 text-muted">
+            <i class="bi bi-basket3 fs-1 text-secondary opacity-50 d-block mb-2"></i>
+            <div class="fw-semibold">Cart is currently empty</div>
+            <small>Scan a barcode or click a product to begin billing</small>
+        </div>
+
+        <!-- Bill Calculation Summary -->
+        <div class="pt-2">
+            <!-- Customer Details Accordion/Inputs -->
+            <div class="row g-2 mb-2">
+                <div class="col-7">
+                    <input type="text" id="customer-name-input" class="form-control form-control-sm" placeholder="Customer Name (optional)">
+                </div>
+                <div class="col-5">
+                    <input type="text" id="customer-phone-input" class="form-control form-control-sm" placeholder="Phone #">
+                </div>
+            </div>
+
+            <!-- Discount & Tax Controls -->
+            <div class="row g-2 mb-2">
+                <div class="col-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted">Discount $</span>
+                        <input type="number" id="discount-input" class="form-control text-end" value="0.00" min="0" step="0.5">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light text-muted">Tax %</span>
+                        <input type="number" id="tax-rate-input" class="form-control text-end" value="{{ default_tax_rate }}" min="0" step="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtotals -->
+            <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Subtotal:</span>
+                <span id="cart-subtotal" class="fw-medium">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between small text-muted mb-2">
+                <span>Estimated Tax:</span>
+                <span id="cart-tax" class="fw-medium">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2 border-top border-bottom mb-3">
+                <span class="fs-5 fw-bold">Total Payable:</span>
+                <span class="fs-4 fw-bold text-primary" id="cart-final-total">$0.00</span>
+            </div>
+
+            <!-- Payment Methods Radio Group -->
+            <div class="mb-3">
+                <label class="form-label small fw-semibold text-secondary mb-1">Payment Method:</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="payment_method" id="payCash" value="CASH" checked>
+                    <label class="btn btn-outline-secondary btn-sm py-1 fw-medium" for="payCash"><i class="bi bi-cash me-1"></i>Cash</label>
+
+                    <input type="radio" class="btn-check" name="payment_method" id="payCard" value="CARD">
+                    <label class="btn btn-outline-secondary btn-sm py-1 fw-medium" for="payCard"><i class="bi bi-credit-card me-1"></i>Card</label>
+
+                    <input type="radio" class="btn-check" name="payment_method" id="payUPI" value="UPI">
+                    <label class="btn btn-outline-secondary btn-sm py-1 fw-medium" for="payUPI"><i class="bi bi-qr-code-scan me-1"></i>UPI/QR</label>
+
+                    <input type="radio" class="btn-check" name="payment_method" id="payDigital" value="DIGITAL">
+                    <label class="btn btn-outline-secondary btn-sm py-1 fw-medium" for="payDigital"><i class="bi bi-wallet me-1"></i>Digital</label>
+                </div>
+            </div>
+
+            <!-- Confirm & Checkout Button -->
+            <button class="btn btn-primary w-100 py-2 fs-6 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" id="btn-checkout">
+                <i class="bi bi-check-circle"></i>
+                <span>Confirm &amp; Generate Bill (<span id="btn-pay-amount">$0.00</span>)</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/billing.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,34 @@
+# Environment variables & secrets (Protects your MySQL password)
+.env
+.env.local
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Local databases
+*.db
+*.sqlite3
+supermarket.db
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# IDE & Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store

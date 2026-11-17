@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Dashboard{% endblock %}
+{% block page_title %}Executive Supermarket Dashboard{% endblock %}
+
+{% block content %}
+<!-- Top Critical Alerts Notice if Low Stock or Expiry exists -->
+{% if summary.low_stock_count > 0 or summary.out_of_stock_count > 0 or summary.nearing_expiry_count > 0 %}
+<div class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-exclamation-triangle-fill fs-3 text-warning"></i>
+        <div>
+            <div class="fw-bold">Action Needed: Inventory &amp; Expiry Alerts Detected</div>
+            <div class="small">
+                {% if summary.out_of_stock_count > 0 %}<span class="badge bg-danger me-1">{{ summary.out_of_stock_count }} Out of Stock</span>{% endif %}
+                {% if summary.low_stock_count > 0 %}<span class="badge bg-warning text-dark me-1">{{ summary.low_stock_count }} Low Stock</span>{% endif %}
+                {% if summary.nearing_expiry_count > 0 %}<span class="badge bg-danger-subtle text-danger-emphasis me-1">{{ summary.nearing_expiry_count }} Batches Nearing Expiry</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    <a href="{{ url_for('inventory.alerts') }}" class="btn btn-sm btn-dark fw-semibold">Review Alerts <i class="bi bi-arrow-right"></i></a>
+</div>
+{% endif %}
+
+<!-- Row 1: Primary Revenue & Financial KPIs -->
+<div class="row g-3 mb-4">
+    <!-- Today's Sales -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card-stat">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="stat-label">Today's Revenue</span>
+                    <h3 class="stat-val text-primary">${{ "%.2f"|format(summary.sales_today) }}</h3>
+                    <small class="text-muted"><i class="bi bi-receipt me-1"></i>{{ summary.orders_today_count }} bills generated today</small>
+                </div>
+                <div class="stat-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month's Sales -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card-stat">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="stat-label">This Month Sales</span>
+                    <h3 class="stat-val text-dark-emphasis">${{ "%.2f"|format(summary.sales_month) }}</h3>
+                    <small class="text-success fw-medium"><i class="bi bi-graph-up me-1"></i>Cumulative MTD</small>
+                </div>
+                <div class="stat-icon bg-info-subtle text-info">
+                    <i class="bi bi-calendar-month"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Gross Profit -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card-stat">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="stat-label">Gross Profit (MTD)</span>
+                    <h3 class="stat-val text-success">${{ "%.2f"|format(summary.month_gross_profit) }}</h3>
+                    <small class="text-muted">Rev - Batch COGS - Returns</small>
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Net Profit -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card-stat">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="stat-label">Net Profit (MTD)</span>
+                    <h3 class="stat-val {% if summary.month_net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ "%.2f"|format(summary.month_net_profit) }}
+                    </h3>
+                    <small class="text-muted">After Expenses (${{ "%.2f"|format(summary.month_expenses) }})</small>
+                </div>
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-pie-chart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Stock & Inventory Status KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card-stat p-3">
+            <span class="stat-label">Total SKUs</span>
+            <h4 class="stat-val my-1">{{ summary.total_products }}</h4>
+            <small class="text-muted">Active Products</small>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card-stat p-3">
+            <span class="stat-label">Total Units</span>
+            <h4 class="stat-val my-1">{{ summary.total_stock_qty }}</h4>
+            <small class="text-muted">Units in Stock</small>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card-stat p-3">
+            <span class="stat-label">Low Stock</span>
+            <h4 class="stat-val my-1 text-warning">{{ summary.low_stock_count }}</h4>
+            <small class="text-muted">&le; Min Threshold</small>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card-stat p-3">
+            <span class="stat-label">Out of Stock</span>
+            <h4 class="stat-val my-1 text-danger">{{ summary.out_of_stock_count }}</h4>
+            <small class="text-muted">Zero inventory</small>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card-stat p-3">
+            <span class="stat-label">Near Expiry</span>
+            <h4 class="stat-val my-1 text-danger-emphasis">{{ summary.nearing_expiry_count }}</h4>
+            <small class="text-muted">&le; 30 Days Remaining</small>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card-stat p-3">
+            <span class="stat-label">Suppliers</span>
+            <h4 class="stat-val my-1 text-info">{{ summary.total_suppliers }}</h4>
+            <small class="text-muted">Active Partners</small>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Interactive Analytics Charts -->
+<div class="row g-3 mb-4">
+    <!-- Sales & Gross Profit Trend Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-line text-primary me-2"></i>Sales &amp; Profit Trends</h6>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-primary active" data-chart-period="daily">Daily (Last 7 Days)</button>
+                    <button class="btn btn-outline-secondary" data-chart-period="monthly">Monthly (Last 6 Months)</button>
+                </div>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="salesTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Revenue Distribution -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart text-success me-2"></i>Category Sales Share</h6>
+            <div style="height: 280px; position: relative;">
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 4: Best Sellers, Slow Movers & Recent Transactions -->
+<div class="row g-3">
+    <!-- Best-Selling Products -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold small text-uppercase"><i class="bi bi-fire text-danger me-1"></i> Best-Selling Items</span>
+                <a href="{{ url_for('analytics.products_analysis') }}" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for p in best_sellers %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                        <div>
+                            <div class="fw-semibold small">{{ p.name }}</div>
+                            <small class="text-muted">Barcode: {{ p.barcode }}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary-subtle text-primary fw-bold">{{ p.total_sold }} sold</span>
+                            <div class="text-success small fw-semibold">${{ "%.2f"|format(p.total_revenue) }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-3 text-center text-muted small">No sales recorded yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slow-Moving Products -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold small text-uppercase"><i class="bi bi-hourglass-split text-warning me-1"></i> Slow-Moving Stock</span>
+                <a href="{{ url_for('analytics.products_analysis') }}" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for p in slow_moving %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-3 py-2">
+                        <div>
+                            <div class="fw-semibold small">{{ p.name }}</div>
+                            <small class="text-muted">Stock: {{ p.current_stock }} units</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-secondary-subtle text-secondary fw-semibold">{{ p.total_sold }} sold</span>
+                            <div class="text-muted small">Low turnover</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-3 text-center text-muted small">All active stock is moving normally.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Sales Transactions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold small text-uppercase"><i class="bi bi-receipt text-primary me-1"></i> Recent Sales</span>
+                <a href="{{ url_for('sales.index') }}" class="small text-decoration-none">Full History</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for s in summary.recent_sales %}
+                    <a href="{{ url_for('billing.view_invoice', invoice_number=s.invoice_number) }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-3 py-2">
+                        <div>
+                            <div class="fw-semibold small text-primary">{{ s.invoice_number }}</div>
+                            <small class="text-muted">{{ s.transaction_date.strftime('%b %d, %H:%M') }} &bull; {{ s.customer_name }}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold small">${{ "%.2f"|format(s.final_amount) }}</div>
+                            <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">{{ s.payment_method }}</span>
+                        </div>
+                    </a>
+                    {% else %}
+                    <div class="p-3 text-center text-muted small">No transactions completed yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

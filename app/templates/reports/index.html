@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Reports &amp; Data Exports{% endblock %}
+{% block page_title %}Reports &amp; Analytical Data Exports{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h5 class="fw-bold mb-0">Business Intelligence Reports &amp; Exports</h5>
+    <small class="text-muted">Generate formal PDF executive summaries (ReportLab) and Microsoft Excel (.xlsx) spreadsheets</small>
+</div>
+
+<!-- Report Cards Grid -->
+<div class="row g-4">
+    <!-- 1. Sales Report -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="stat-icon bg-primary-subtle text-primary" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Sales Transactions</h6>
+                </div>
+                <p class="small text-muted mb-3">Itemized customer sales, cashier IDs, payment methods, discounts, and taxes.</p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Date Range</label>
+                    <div class="input-group input-group-sm mb-1">
+                        <span class="input-group-text bg-light">From</span>
+                        <input type="date" id="salesFrom" class="form-control" value="{{ first_of_month }}">
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light">To</span>
+                        <input type="date" id="salesTo" class="form-control" value="{{ today }}">
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 pt-2 border-top">
+                <button onclick="downloadReport('pdf', 'sales', 'salesFrom', 'salesTo')" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </button>
+                <button onclick="downloadReport('excel', 'sales', 'salesFrom', 'salesTo')" class="btn btn-outline-success btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Product Inventory Report -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="stat-icon bg-info-subtle text-info" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Product Inventory</h6>
+                </div>
+                <p class="small text-muted mb-3">Complete catalogue snapshot with barcodes, retail prices, acquisition costs, and current quantities.</p>
+            </div>
+            <div class="d-flex gap-2 pt-2 border-top">
+                <a href="{{ url_for('reports.export_report', format_type='pdf', report_type='inventory') }}" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </a>
+                <a href="{{ url_for('reports.export_report', format_type='excel', report_type='inventory') }}" class="btn btn-outline-success btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Low Stock & Out of Stock -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="stat-icon bg-warning-subtle text-warning" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Low &amp; Zero Stock Alert</h6>
+                </div>
+                <p class="small text-muted mb-3">Re-order worksheet identifying products below threshold limits and calculated shortages.</p>
+            </div>
+            <div class="d-flex gap-2 pt-2 border-top">
+                <a href="{{ url_for('reports.export_report', format_type='pdf', report_type='low_stock') }}" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </a>
+                <a href="{{ url_for('reports.export_report', format_type='excel', report_type='low_stock') }}" class="btn btn-outline-success btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Batch Expiry Report -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="stat-icon bg-danger-subtle text-danger" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="bi bi-calendar-x"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Batch Expiry Tracking</h6>
+                </div>
+                <p class="small text-muted mb-3">FEFO batch expiration schedule highlighting critical products nearing or past shelf-life.</p>
+            </div>
+            <div class="d-flex gap-2 pt-2 border-top">
+                <a href="{{ url_for('reports.export_report', format_type='pdf', report_type='expiry') }}" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </a>
+                <a href="{{ url_for('reports.export_report', format_type='excel', report_type='expiry') }}" class="btn btn-outline-success btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Profit & Loss Statement -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="stat-icon bg-success-subtle text-success" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Profit &amp; Loss Statement</h6>
+                </div>
+                <p class="small text-muted mb-3">Formal financial summary of revenue, batch COGS, operating overheads, and net profit.</p>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold text-secondary">Period</label>
+                    <div class="input-group input-group-sm mb-1">
+                        <span class="input-group-text bg-light">From</span>
+                        <input type="date" id="pnlFrom" class="form-control" value="{{ first_of_month }}">
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light">To</span>
+                        <input type="date" id="pnlTo" class="form-control" value="{{ today }}">
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 pt-2 border-top">
+                <button onclick="downloadReport('pdf', 'profit_loss', 'pnlFrom', 'pnlTo')" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </button>
+                <button onclick="downloadReport('excel', 'profit_loss', 'pnlFrom', 'pnlTo')" class="btn btn-outline-success btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. Best-Selling Products -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 h-100 p-3 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="stat-icon bg-primary-subtle text-primary" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Best-Selling Products</h6>
+                </div>
+                <p class="small text-muted mb-3">Top revenue and volume drivers ranked with gross margins and remaining stock counts.</p>
+            </div>
+            <div class="d-flex gap-2 pt-2 border-top">
+                <a href="{{ url_for('reports.export_report', format_type='pdf', report_type='best_sellers') }}" class="btn btn-outline-danger btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                </a>
+                <a href="{{ url_for('reports.export_report', format_type='excel', report_type='best_sellers') }}" class="btn btn-outline-success btn-sm w-50 fw-semibold">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function downloadReport(format, reportType, fromInputId, toInputId) {
+        const fromDate = document.getElementById(fromInputId).value;
+        const toDate = document.getElementById(toInputId).value;
+        let url = `/reports/export/${format}/${reportType}?start_date=${encodeURIComponent(fromDate)}&end_date=${encodeURIComponent(toDate)}`;
+        window.location.href = url;
+    }
+</script>
+{% endblock %}

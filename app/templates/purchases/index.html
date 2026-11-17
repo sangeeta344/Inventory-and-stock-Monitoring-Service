@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Purchases &amp; Receiving{% endblock %}
+{% block page_title %}Purchase Orders &amp; Goods Receiving{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-0">Purchases &amp; Receiving History</h5>
+        <small class="text-muted">Track wholesale purchase orders, supplier invoices, and automatic inventory stock increments</small>
+    </div>
+    <a href="{{ url_for('purchases.new_purchase') }}" class="btn btn-primary fw-semibold">
+        <i class="bi bi-bag-plus me-1"></i> New Purchase &amp; Stock In
+    </a>
+</div>
+
+<!-- Purchases List -->
+<div class="table-custom">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Invoice / PO #</th>
+                    <th>Supplier</th>
+                    <th>Purchase Date</th>
+                    <th class="text-center">Items Received</th>
+                    <th class="text-end">Total Amount</th>
+                    <th class="text-center">Payment Status</th>
+                    <th class="text-center">Stock Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in purchases %}
+                <tr>
+                    <td>
+                        <span class="font-monospace fw-bold text-primary">{{ p.invoice_number }}</span>
+                    </td>
+                    <td>
+                        <div class="fw-semibold">{{ p.supplier.company_name if p.supplier else 'N/A' }}</div>
+                        <small class="text-muted">{{ p.supplier.name if p.supplier else '' }}</small>
+                    </td>
+                    <td>{{ p.purchase_date.strftime('%Y-%m-%d') if p.purchase_date else '-' }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border">{{ p.items.count() }} products</span>
+                    </td>
+                    <td class="text-end fw-bold">${{ "%.2f"|format(p.total_amount) }}</td>
+                    <td class="text-center">
+                        {% if p.payment_status == 'PAID' %}
+                            <span class="badge bg-success-subtle text-success">PAID</span>
+                        {% elif p.payment_status == 'PARTIAL' %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis">PARTIAL</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger">PENDING</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>RECEIVED</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('purchases.view_purchase', id=p.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i> Details
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">No purchase orders found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

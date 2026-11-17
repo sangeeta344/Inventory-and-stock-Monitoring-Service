@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}System Audit Trail{% endblock %}
+{% block page_title %}Security &amp; Operations Audit Trail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-0">Employee Activity &amp; Audit Logs</h5>
+        <small class="text-muted">Immutable log of security authentications, inventory alterations, billing events, and price edits</small>
+    </div>
+    <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-people me-1"></i> Staff Directory
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('employees.activity_logs') }}" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <select name="user_id" class="form-select">
+                    <option value="">All Users</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if current_user_id == u.id %}selected{% endif %}>{{ u.full_name }} ({{ u.username }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="module" class="form-select">
+                    <option value="all">All Modules</option>
+                    {% for m in modules %}
+                    <option value="{{ m }}" {% if current_module == m %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-dark w-100 fw-medium">Filter Logs</button>
+                <a href="{{ url_for('employees.activity_logs') }}" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-clockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-custom">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Module</th>
+                    <th>Audit Details</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="small text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>
+                        <div class="fw-bold">{{ log.user.full_name if log.user else 'Unknown' }}</div>
+                        <small class="text-muted">{{ log.user.role if log.user else '' }}</small>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ log.action }}</span></td>
+                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ log.module }}</span></td>
+                    <td class="small" style="max-width: 320px;">{{ log.details or '-' }}</td>
+                    <td class="font-monospace small text-muted">{{ log.ip_address or 'Local' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No audit trail records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

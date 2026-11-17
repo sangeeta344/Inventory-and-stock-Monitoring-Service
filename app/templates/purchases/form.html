@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Record Purchase &amp; Stock In{% endblock %}
+{% block page_title %}New Purchase Order &amp; Receiving{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 fw-bold"><i class="bi bi-bag-plus text-primary me-2"></i>Receive Goods &amp; Auto-Update Stock</h5>
+        <a href="{{ url_for('purchases.index') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Purchases
+        </a>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('purchases.new_purchase') }}" id="purchaseForm">
+            <!-- Purchase Header -->
+            <div class="row g-3 mb-4 p-3 bg-light rounded-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold text-secondary">Supplier / Vendor <span class="text-danger">*</span></label>
+                    <select name="supplier_id" class="form-select" required>
+                        <option value="">Select Supplier...</option>
+                        {% for s in suppliers %}
+                        <option value="{{ s.id }}">{{ s.company_name }} ({{ s.name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-secondary">Supplier Invoice # <span class="text-danger">*</span></label>
+                    <input type="text" name="invoice_number" class="form-control" placeholder="e.g. SUP-INV-9921" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-secondary">Purchase Date</label>
+                    <input type="date" name="purchase_date" class="form-control" value="{{ now_date }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold text-secondary">Payment Status</label>
+                    <select name="payment_status" class="form-select">
+                        <option value="PAID">PAID</option>
+                        <option value="PENDING">PENDING</option>
+                        <option value="PARTIAL">PARTIAL</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Line Items Table -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-list-check me-1 text-primary"></i>Items Received into Inventory</h6>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-semibold" id="btnAddRow">
+                    <i class="bi bi-plus-lg me-1"></i> Add Another Product
+                </button>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered align-middle" id="purchaseItemsTable">
+                    <thead class="table-light small">
+                        <tr>
+                            <th style="width: 30%;">Product <span class="text-danger">*</span></th>
+                            <th style="width: 12%;">Qty <span class="text-danger">*</span></th>
+                            <th style="width: 14%;">Unit Cost ($) <span class="text-danger">*</span></th>
+                            <th style="width: 18%;">Batch Number</th>
+                            <th style="width: 16%;">Expiry Date</th>
+                            <th class="text-center" style="width: 10%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <select name="product_id[]" class="form-select form-select-sm product-select" required onchange="handleProductSelect(this)">
+                                    <option value="">Select product...</option>
+                                    {% for prod in products %}
+                                    <option value="{{ prod.id }}" data-price="{{ prod.purchase_price }}">{{ prod.name }} ({{ prod.barcode }})</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" min="1" name="quantity[]" class="form-control form-control-sm text-center" value="10" required>
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" name="unit_price[]" class="form-control form-control-sm text-end unit-price-input" placeholder="0.00" required>
+                            </td>
+                            <td>
+                                <input type="text" name="batch_number[]" class="form-control form-control-sm" placeholder="Leave empty for auto">
+                            </td>
+                            <td>
+                                <input type="date" name="expiry_date[]" class="form-control form-control-sm">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeRow(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+                <label class="form-label small fw-semibold text-secondary">Receiving Notes / Truck Dispatch Ref</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Inspection remarks, delivery truck info, or damage check notes"></textarea>
+            </div>
+
+            <div class="alert alert-info border-0 py-2 small d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle-fill fs-5"></i>
+                <span>All items marked here will be automatically registered into separate FEFO inventory batches, and product warehouse stock will be instantly updated.</span>
+            </div>
+
+            <div class="text-end pt-2">
+                <a href="{{ url_for('purchases.index') }}" class="btn btn-outline-secondary px-3 me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                    <i class="bi bi-check-circle me-1"></i> Receive Order &amp; Increase Stock
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function handleProductSelect(selectEl) {
+        const option = selectEl.options[selectEl.selectedIndex];
+        const defaultPrice = option.getAttribute('data-price');
+        const row = selectEl.closest('tr');
+        const priceInput = row.querySelector('.unit-price-input');
+        if (priceInput && defaultPrice) {
+            priceInput.value = parseFloat(defaultPrice).toFixed(2);
+        }
+    }
+
+    document.getElementById('btnAddRow').addEventListener('click', () => {
+        const tableBody = document.querySelector('#purchaseItemsTable tbody');
+        const firstRow = tableBody.querySelector('tr');
+        const newRow = firstRow.cloneNode(true);
+        // Reset inputs
+        newRow.querySelectorAll('input').forEach(input => {
+            if (input.type === 'number') {
+                input.value = input.name.includes('quantity') ? 10 : '';
+            } else {
+                input.value = '';
+            }
+        });
+        tableBody.appendChild(newRow);
+    });
+
+    function removeRow(btn) {
+        const rows = document.querySelectorAll('#purchaseItemsTable tbody tr');
+        if (rows.length > 1) {
+            btn.closest('tr').remove();
+        } else {
+            alert('At least one product item is required for receiving.');
+        }
+    }
+</script>
+{% endblock %}

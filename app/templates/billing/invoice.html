@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice {{ sale.invoice_number }}{% endblock %}
+{% block page_title %}Digital Bill &amp; Tax Receipt{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center mb-4 no-print gap-2">
+    <a href="{{ url_for('billing.pos') }}" class="btn btn-outline-secondary fw-semibold">
+        <i class="bi bi-cart-plus me-1"></i> New Sale (POS)
+    </a>
+    <button onclick="window.print()" class="btn btn-primary fw-semibold">
+        <i class="bi bi-printer me-1"></i> Print Digital Invoice
+    </button>
+    <a href="{{ url_for('reports.export_report', format_type='pdf', report_type='sales', start_date=sale.transaction_date.strftime('%Y-%m-%d'), end_date=sale.transaction_date.strftime('%Y-%m-%d')) }}" 
+       class="btn btn-dark fw-semibold">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+    </a>
+</div>
+
+<!-- Digital Invoice Printable Card (Receipt / A4 Hybrid) -->
+<div class="invoice-receipt" id="printable-invoice">
+    <!-- Store Header -->
+    <div class="text-center mb-3">
+        <h4 class="fw-bold mb-1 text-uppercase">{{ store_name }}</h4>
+        <div class="small text-muted">{{ store_address }}</div>
+        <div class="small text-muted">Phone: {{ store_phone }} &bull; Email: {{ store_email }}</div>
+        <div class="small fw-semibold mt-1">TAX ID / GST: GSTIN-98AABCS1234F1Z8</div>
+    </div>
+
+    <div class="border-top border-bottom border-dark border-dashed py-2 my-2 small">
+        <div class="d-flex justify-content-between">
+            <span><strong>Invoice #:</strong> {{ sale.invoice_number }}</span>
+            <span><strong>Date:</strong> {{ sale.transaction_date.strftime('%d-%b-%Y %H:%M') }}</span>
+        </div>
+        <div class="d-flex justify-content-between mt-1">
+            <span><strong>Cashier:</strong> {{ sale.cashier.full_name if sale.cashier else 'Staff' }}</span>
+            <span><strong>Payment:</strong> <span class="badge bg-light text-dark border">{{ sale.payment_method }}</span></span>
+        </div>
+        <div class="mt-1">
+            <span><strong>Customer:</strong> {{ sale.customer_name or 'Walk-in Customer' }}</span>
+            {% if sale.customer_phone %}<span class="ms-2">({{ sale.customer_phone }})</span>{% endif %}
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <table class="table table-sm border-0 my-3 small" style="width: 100%;">
+        <thead>
+            <tr class="border-bottom border-dark">
+                <th style="width: 50%;">Item</th>
+                <th class="text-center" style="width: 15%;">Qty</th>
+                <th class="text-end" style="width: 15%;">Price</th>
+                <th class="text-end" style="width: 20%;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sale.items %}
+            <tr>
+                <td>
+                    <div class="fw-bold">{{ item.product.name }}</div>
+                    <small class="text-muted" style="font-size: 0.72rem;">{{ item.product.barcode }}</small>
+                </td>
+                <td class="text-center">{{ item.quantity }} {{ item.product.unit_of_measure }}</td>
+                <td class="text-end">${{ "%.2f"|format(item.unit_price) }}</td>
+                <td class="text-end fw-semibold">${{ "%.2f"|format(item.subtotal) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Financial Breakdown -->
+    <div class="border-top border-dark border-dashed pt-2 small">
+        <div class="d-flex justify-content-between py-1">
+            <span>Subtotal:</span>
+            <span>${{ "%.2f"|format(sale.subtotal) }}</span>
+        </div>
+        {% if sale.discount_amount > 0 %}
+        <div class="d-flex justify-content-between py-1 text-danger">
+            <span>Discount:</span>
+            <span>-${{ "%.2f"|format(sale.discount_amount) }}</span>
+        </div>
+        {% endif %}
+        <div class="d-flex justify-content-between py-1">
+            <span>Tax Amount:</span>
+            <span>${{ "%.2f"|format(sale.tax_amount) }}</span>
+        </div>
+        <div class="d-flex justify-content-between py-2 border-top border-bottom border-dark border-2 my-1 fw-bold fs-6">
+            <span>GRAND TOTAL:</span>
+            <span>${{ "%.2f"|format(sale.final_amount) }}</span>
+        </div>
+    </div>
+
+    <!-- Barcode / Footer -->
+    <div class="text-center mt-4 pt-2 border-top border-dashed small text-muted">
+        <div class="font-monospace fw-bold fs-6 mb-1">* {{ sale.invoice_number }} *</div>
+        <div>Thank you for shopping at {{ store_name }}!</div>
+        <div style="font-size: 0.7rem;">Please retain this digital bill for returns within 7 days.</div>
+    </div>
+</div>
+{% endblock %}

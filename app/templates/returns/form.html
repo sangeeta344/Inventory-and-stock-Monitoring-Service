@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Process Customer Return{% endblock %}
+{% block page_title %}Process Customer Return &amp; Refund{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold"><i class="bi bi-arrow-counterclockwise text-primary me-2"></i>Invoice Lookup &amp; Customer Return Processing</h5>
+                <a href="{{ url_for('returns.index') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Returns
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <!-- Step 1: Invoice Search Bar -->
+                <div class="mb-4 p-3 bg-light rounded-3">
+                    <label class="form-label small fw-semibold text-secondary">Step 1: Enter Customer Invoice Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-receipt"></i></span>
+                        <input type="text" id="invoiceSearchInput" class="form-control" placeholder="e.g. INV-20261117-1234" autofocus>
+                        <button class="btn btn-primary fw-semibold" type="button" id="btnSearchInvoice">
+                            <i class="bi bi-search me-1"></i> Lookup Bill
+                        </button>
+                    </div>
+                    <small class="text-muted">Enter the unique invoice number printed on the customer's digital bill.</small>
+                </div>
+
+                <!-- Invoice Found Details Box (Initially Hidden) -->
+                <div id="invoiceDetailsBox" class="d-none">
+                    <div class="alert alert-success border-0 py-2 d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <strong id="dispInvoiceNum"></strong> &bull; Customer: <span id="dispCustomerName"></span> &bull; Date: <span id="dispSaleDate"></span>
+                        </div>
+                        <div>
+                            Total Paid: <strong id="dispFinalAmount" class="fs-6 text-primary"></strong>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Form for return items -->
+                    <form method="POST" action="{{ url_for('returns.new_return') }}" id="returnForm" onsubmit="return validateReturnSubmit()">
+                        <input type="hidden" name="sale_id" id="hiddenSaleId">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0"><i class="bi bi-list-check me-1 text-primary"></i>Step 2: Select Items to Return</h6>
+                            <span class="small text-muted">Check the box next to each item and specify quantity</span>
+                        </div>
+
+                        <div class="table-responsive border rounded mb-3">
+                            <table class="table table-bordered align-middle mb-0" id="returnItemsTable">
+                                <thead class="table-light small">
+                                    <tr>
+                                        <th style="width: 5%;" class="text-center">Select</th>
+                                        <th style="width: 35%;">Product</th>
+                                        <th class="text-center" style="width: 10%;">Sold Qty</th>
+                                        <th class="text-center" style="width: 15%;">Return Qty</th>
+                                        <th style="width: 15%;">Condition</th>
+                                        <th style="width: 20%;">Return Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnTableBody">
+                                    <!-- Rendered dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Live Refund Total Box -->
+                        <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center mb-3 border">
+                            <span class="fw-bold fs-6">Estimated Refund Total:</span>
+                            <span class="fs-4 fw-bold text-danger" id="liveRefundTotal">$0.00</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">General Return Notes / Authorization</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Customer signature verification or manager authorization note"></textarea>
+                        </div>
+
+                        <div class="alert alert-warning border-0 py-2 small d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-shield-exclamation fs-5"></i>
+                            <span>Items marked as <strong>RESELLABLE</strong> will be returned to active inventory batches. Items marked as <strong>DAMAGED</strong> or <strong>EXPIRED</strong> will be tracked as loss without increasing sellable stock.</span>
+                        </div>
+
+                        <div class="text-end pt-2">
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold" id="btnSubmitReturn">
+                                <i class="bi bi-check-circle me-1"></i> Confirm Return &amp; Issue Refund
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentSaleItems = [];
+
+    document.getElementById('btnSearchInvoice').addEventListener('click', doInvoiceSearch);
+    document.getElementById('invoiceSearchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            doInvoiceSearch();
+        }
+    });
+
+    function doInvoiceSearch() {
+        const inv = document.getElementById('invoiceSearchInput').value.trim();
+        if (!inv) {
+            alert('Please enter an invoice number to search.');
+            return;
+        }
+
+        const btn = document.getElementById('btnSearchInvoice');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Searching...';
+
+        fetch(`/returns/search-sale?invoice_number=${encodeURIComponent(inv)}`)
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-search me-1"></i> Lookup Bill';
+
+                if (data.success && data.sale) {
+                    displaySaleForReturn(data.sale);
+                } else {
+                    alert(data.message || 'Invoice not found.');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-search me-1"></i> Lookup Bill';
+                console.error(err);
+                alert('Server error looking up invoice.');
+            });
+    }
+
+    function displaySaleForReturn(sale) {
+        document.getElementById('dispInvoiceNum').innerText = sale.invoice_number;
+        document.getElementById('dispCustomerName').innerText = sale.customer_name;
+        document.getElementById('dispSaleDate').innerText = sale.transaction_date;
+        document.getElementById('dispFinalAmount').innerText = '$' + sale.final_amount.toFixed(2);
+        document.getElementById('hiddenSaleId').value = sale.id;
+
+        currentSaleItems = sale.items;
+        const tbody = document.getElementById('returnTableBody');
+        tbody.innerHTML = '';
+
+        if (!sale.items || sale.items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No items in this invoice.</td></tr>';
+            document.getElementById('invoiceDetailsBox').classList.remove('d-none');
+            return;
+        }
+
+        sale.items.forEach((item, idx) => {
+            const isEligible = item.max_returnable > 0;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input item-select-check" 
+                           data-idx="${idx}" ${isEligible ? '' : 'disabled'} onchange="toggleItemSelect(${idx}, this.checked)">
+                </td>
+                <td>
+                    <input type="hidden" name="sale_item_id[]" value="${item.sale_item_id}">
+                    <div class="fw-bold">${escapeHtml(item.product_name)}</div>
+                    <small class="text-muted">Barcode: ${item.barcode} | Unit Price: $${item.unit_price.toFixed(2)}</small>
+                    ${!isEligible ? '<div class="text-danger small mt-1">Already fully returned</div>' : ''}
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-light text-dark border">${item.quantity_sold}</span>
+                    ${item.already_returned > 0 ? `<div class="small text-muted">(${item.already_returned} ret)</div>` : ''}
+                </td>
+                <td>
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" 
+                                onclick="adjustReturnQty(${idx}, -1)" ${isEligible ? '' : 'disabled'}>-</button>
+                        <input type="number" name="return_quantity[]" id="returnQty_${idx}" 
+                               class="form-control form-control-sm text-center return-qty-input" 
+                               value="0" min="0" max="${item.max_returnable}" style="width: 55px;" 
+                               ${isEligible ? '' : 'disabled'} oninput="updateLiveRefund()">
+                        <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" 
+                                onclick="adjustReturnQty(${idx}, 1)" ${isEligible ? '' : 'disabled'}>+</button>
+                    </div>
+                    <div class="text-center small text-muted mt-1">max: ${item.max_returnable}</div>
+                </td>
+                <td>
+                    <select name="condition[]" class="form-select form-select-sm" ${isEligible ? '' : 'disabled'}>
+                        <option value="RESELLABLE">RESELLABLE (Restock)</option>
+                        <option value="DAMAGED">DAMAGED (Wastage)</option>
+                        <option value="EXPIRED">EXPIRED (Wastage)</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" name="reason[]" class="form-control form-control-sm" 
+                           placeholder="Return reason" ${isEligible ? '' : 'disabled'}>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('invoiceDetailsBox').classList.remove('d-none');
+        updateLiveRefund();
+    }
+
+    function toggleItemSelect(idx, isChecked) {
+        const qtyInput = document.getElementById(`returnQty_${idx}`);
+        if (!qtyInput) return;
+        const maxQty = parseInt(qtyInput.getAttribute('max')) || 1;
+        if (isChecked) {
+            qtyInput.value = Math.min(1, maxQty);
+        } else {
+            qtyInput.value = 0;
+        }
+        updateLiveRefund();
+    }
+
+    function adjustReturnQty(idx, delta) {
+        const qtyInput = document.getElementById(`returnQty_${idx}`);
+        if (!qtyInput) return;
+        const maxQty = parseInt(qtyInput.getAttribute('max')) || 0;
+        let current = parseInt(qtyInput.value) || 0;
+        let nextVal = Math.max(0, Math.min(maxQty, current + delta));
+        qtyInput.value = nextVal;
+
+        // Sync checkbox
+        const checkEl = document.querySelector(`.item-select-check[data-idx="${idx}"]`);
+        if (checkEl) {
+            checkEl.checked = nextVal > 0;
+        }
+        updateLiveRefund();
+    }
+
+    function updateLiveRefund() {
+        let totalRefund = 0.0;
+        currentSaleItems.forEach((item, idx) => {
+            const qtyInput = document.getElementById(`returnQty_${idx}`);
+            if (qtyInput) {
+                const qty = parseInt(qtyInput.value) || 0;
+                totalRefund += qty * item.unit_price;
+            }
+        });
+        document.getElementById('liveRefundTotal').innerText = `$${totalRefund.toFixed(2)}`;
+    }
+
+    function validateReturnSubmit() {
+        let totalQty = 0;
+        const qtyInputs = document.querySelectorAll('.return-qty-input');
+        qtyInputs.forEach(input => {
+            totalQty += parseInt(input.value) || 0;
+        });
+
+        if (totalQty <= 0) {
+            alert('Please select at least one item to return and set a return quantity of at least 1.');
+            return false;
+        }
+        return true;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}

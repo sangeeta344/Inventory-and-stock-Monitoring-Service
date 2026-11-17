@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Category Management{% endblock %}
+{% block page_title %}Categories Management{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Category Creation Form -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-tag text-primary me-2"></i>Create New Category</h6>
+            </div>
+            <div class="card-body p-3">
+                <form method="POST" action="{{ url_for('products.categories') }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Frozen Foods" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Category brief"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-plus-circle me-1"></i> Add Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category List Table -->
+    <div class="col-lg-8">
+        <div class="table-custom">
+            <div class="p-3 border-bottom bg-white d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">Existing Categories ({{ categories|length }})</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Category Name</th>
+                            <th>Description</th>
+                            <th class="text-center">Active Products</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td class="fw-bold text-dark-emphasis">{{ cat.name }}</td>
+                            <td class="text-muted small">{{ cat.description or '-' }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('products.list_products', category_id=cat.id) }}" class="badge bg-primary-subtle text-primary text-decoration-none">
+                                    {{ cat.products.count() }} products
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success">Active</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">No categories created yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

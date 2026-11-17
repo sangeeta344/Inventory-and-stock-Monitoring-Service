@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Returns{% endblock %}
+{% block page_title %}Customer Returns &amp; Refund Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-0">Customer Returns History</h5>
+        <small class="text-muted">Process customer item returns, issue refunds, and restock resellable items automatically</small>
+    </div>
+    <a href="{{ url_for('returns.new_return') }}" class="btn btn-primary fw-semibold">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Process Customer Return
+    </a>
+</div>
+
+<div class="table-custom">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Return #</th>
+                    <th>Original Invoice</th>
+                    <th>Return Date</th>
+                    <th>Processed By</th>
+                    <th class="text-center">Items Returned</th>
+                    <th class="text-end">Total Refunded</th>
+                    <th>Reason / Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in returns %}
+                <tr>
+                    <td><span class="font-monospace fw-bold text-danger">{{ r.return_number }}</span></td>
+                    <td>
+                        <a href="{{ url_for('billing.view_invoice', invoice_number=r.sale.invoice_number) }}" class="fw-semibold text-primary text-decoration-none">
+                            {{ r.sale.invoice_number }}
+                        </a>
+                    </td>
+                    <td>{{ r.return_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ r.cashier.full_name if r.cashier else 'Staff' }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border">{{ r.items.count() }} items</span>
+                    </td>
+                    <td class="text-end fw-bold text-danger">${{ "%.2f"|format(r.total_refund_amount) }}</td>
+                    <td class="small text-muted" style="max-width: 250px;">{{ r.notes or 'Standard return' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No returns processed yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

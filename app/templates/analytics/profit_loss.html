@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Profit &amp; Loss Statement{% endblock %}
+{% block page_title %}Financial Profit &amp; Loss Statement{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-0">Financial Profit &amp; Loss Statement</h5>
+        <small class="text-muted">Calculated from actual batch acquisition costs (FEFO), operating expenses, returns, and wastage</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('reports.export_report', format_type='pdf', report_type='profit_loss', start_date=pnl.start_date, end_date=pnl.end_date) }}" class="btn btn-outline-danger fw-semibold btn-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+        </a>
+        <a href="{{ url_for('reports.export_report', format_type='excel', report_type='profit_loss', start_date=pnl.start_date, end_date=pnl.end_date) }}" class="btn btn-outline-success fw-semibold btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
+        </a>
+    </div>
+</div>
+
+<!-- Date Filter Form -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('analytics.profit_loss') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light">Start Date</span>
+                    <input type="date" name="start_date" class="form-control" value="{{ pnl.start_date }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light">End Date</span>
+                    <input type="date" name="end_date" class="form-control" value="{{ pnl.end_date }}">
+                </div>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-medium">Apply Financial Period</button>
+                <a href="{{ url_for('analytics.profit_loss') }}" class="btn btn-outline-secondary btn-sm" title="Current Month"><i class="bi bi-arrow-clockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Primary P&L Summary Table -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-file-earmark-spreadsheet text-primary me-2"></i>Executive Income Statement ({{ pnl.start_date }} to {{ pnl.end_date }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <tbody>
+                        <!-- 1. Revenue -->
+                        <tr class="table-light">
+                            <td class="fw-bold py-2" colspan="2">1. Operating Revenue</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">Gross Sales Revenue</td>
+                            <td class="text-end fw-semibold text-primary">${{ "%.2f"|format(pnl.gross_revenue) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 text-muted">Less: Customer Sales Returns &amp; Refunds</td>
+                            <td class="text-end text-danger">-${{ "%.2f"|format(pnl.sales_returns) }}</td>
+                        </tr>
+                        <tr class="fw-bold border-bottom border-2">
+                            <td class="ps-4">Net Operating Revenue</td>
+                            <td class="text-end text-dark">${{ "%.2f"|format(pnl.net_revenue) }}</td>
+                        </tr>
+
+                        <!-- 2. Cost of Goods Sold -->
+                        <tr class="table-light">
+                            <td class="fw-bold py-2" colspan="2">2. Cost of Goods Sold (COGS)</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4">Batch Product Acquisition Cost (Sold Inventory)</td>
+                            <td class="text-end text-danger">-${{ "%.2f"|format(pnl.cogs) }}</td>
+                        </tr>
+                        <tr class="fw-bold border-bottom border-2 table-success table-opacity-25">
+                            <td class="ps-4 fs-6">GROSS PROFIT</td>
+                            <td class="text-end fs-6 text-success">${{ "%.2f"|format(pnl.gross_profit) }}</td>
+                        </tr>
+
+                        <!-- 3. Wastage & Spoilage -->
+                        <tr class="table-light">
+                            <td class="fw-bold py-2" colspan="2">3. Inventory Spoilage &amp; Wastage Losses</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 text-muted">Expired &amp; Damaged Product Write-Offs</td>
+                            <td class="text-end text-danger">-${{ "%.2f"|format(pnl.wastage_loss) }}</td>
+                        </tr>
+
+                        <!-- 4. Operating Expenses -->
+                        <tr class="table-light">
+                            <td class="fw-bold py-2" colspan="2">4. Itemized Operating Expenses</td>
+                        </tr>
+                        {% for cat, amt in pnl.expenses_by_category.items() %}
+                        <tr>
+                            <td class="ps-4 text-muted">{{ cat }}</td>
+                            <td class="text-end text-danger">-${{ "%.2f"|format(amt) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td class="ps-4 text-muted italic">No operating expenses recorded for period</td>
+                            <td class="text-end">$0.00</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="fw-bold">
+                            <td class="ps-4">Total Operating Expenses</td>
+                            <td class="text-end text-danger">-${{ "%.2f"|format(pnl.total_expenses) }}</td>
+                        </tr>
+
+                        <!-- 5. Net Profit Final -->
+                        <tr class="border-top border-bottom border-dark border-3 {% if pnl.net_profit >= 0 %}table-success{% else %}table-danger{% endif %}">
+                            <td class="fs-5 fw-bold py-3">NET PROFIT / (LOSS)</td>
+                            <td class="text-end fs-4 fw-bold py-3 {% if pnl.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                ${{ "%.2f"|format(pnl.net_profit) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Financial Highlights -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-3 mb-3 p-4 bg-primary text-white">
+            <span class="text-uppercase small text-white-50 fw-bold">Period Net Margin</span>
+            {% set margin = ((pnl.net_profit / pnl.net_revenue) * 100) if pnl.net_revenue > 0 else 0.0 %}
+            <h2 class="fw-bold mt-1 mb-0">{{ "%.2f"|format(margin) }}%</h2>
+            <small class="text-white-50 mt-1 d-block">Net Earnings ratio over net sales</small>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-info me-2"></i>Financial Accounting Principles</h6>
+            <ul class="small text-muted ps-3 mb-0">
+                <li class="mb-2"><strong>Actual Batch Costs:</strong> COGS calculates the real unit purchase cost from the specific inventory batch sold, avoiding inaccurate uniform averages.</li>
+                <li class="mb-2"><strong>Wastage Isolation:</strong> Expired batches and broken goods are recorded into wastage losses rather than inflating COGS.</li>
+                <li class="mb-2"><strong>Return Deductions:</strong> Only resellable returned items replenish sellable inventory; customer refunds are deducted from revenue.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Product-Wise Profitability Breakdown -->
+<div class="table-custom">
+    <div class="p-3 border-bottom bg-white">
+        <h6 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Product-Wise Profit Breakdown (Period)</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Barcode</th>
+                    <th class="text-center">Units Sold</th>
+                    <th class="text-end">Revenue ($)</th>
+                    <th class="text-end">COGS ($)</th>
+                    <th class="text-end">Gross Profit ($)</th>
+                    <th class="text-end">Margin (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pnl.product_profits %}
+                <tr>
+                    <td class="fw-bold">{{ p.name }}</td>
+                    <td><span class="font-monospace small">{{ p.barcode }}</span></td>
+                    <td class="text-center fw-bold">{{ p.quantity_sold }}</td>
+                    <td class="text-end">${{ "%.2f"|format(p.revenue) }}</td>
+                    <td class="text-end text-muted">${{ "%.2f"|format(p.cogs) }}</td>
+                    <td class="text-end fw-bold text-success">${{ "%.2f"|format(p.profit) }}</td>
+                    <td class="text-end fw-medium">{{ p.margin }}%</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No products sold during the selected period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

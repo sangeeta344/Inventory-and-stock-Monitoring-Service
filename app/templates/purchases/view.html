@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase Invoice {{ purchase.invoice_number }}{% endblock %}
+{% block page_title %}Purchase Order Details{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-0">Purchase Order: {{ purchase.invoice_number }}</h5>
+            <small class="text-muted">Supplier: {{ purchase.supplier.company_name }} &bull; Date: {{ purchase.purchase_date }}</small>
+        </div>
+        <a href="{{ url_for('purchases.index') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Purchases
+        </a>
+    </div>
+    <div class="card-body p-4">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <span class="small text-muted d-block">Supplier Company</span>
+                <strong>{{ purchase.supplier.company_name }}</strong>
+            </div>
+            <div class="col-md-3">
+                <span class="small text-muted d-block">Contact Person</span>
+                <div>{{ purchase.supplier.name }} ({{ purchase.supplier.phone }})</div>
+            </div>
+            <div class="col-md-3">
+                <span class="small text-muted d-block">Payment Status</span>
+                <span class="badge bg-success-subtle text-success">{{ purchase.payment_status }}</span>
+            </div>
+            <div class="col-md-3">
+                <span class="small text-muted d-block">Total Purchase Amount</span>
+                <h5 class="fw-bold text-primary mb-0">${{ "%.2f"|format(purchase.total_amount) }}</h5>
+            </div>
+        </div>
+
+        <h6 class="fw-bold mb-2">Received Product Items</h6>
+        <div class="table-responsive border rounded">
+            <table class="table table-striped mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Barcode</th>
+                        <th>Batch Assigned</th>
+                        <th>Expiry Date</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Cost</th>
+                        <th class="text-end">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in purchase.items %}
+                    <tr>
+                        <td class="fw-bold">{{ item.product.name }}</td>
+                        <td><span class="font-monospace small">{{ item.product.barcode }}</span></td>
+                        <td><span class="badge bg-light text-dark border">{{ item.batch_number }}</span></td>
+                        <td>{{ item.expiry_date.strftime('%Y-%m-%d') if item.expiry_date else 'N/A' }}</td>
+                        <td class="text-center fw-bold">{{ item.quantity }} {{ item.product.unit_of_measure }}</td>
+                        <td class="text-end">${{ "%.2f"|format(item.unit_price) }}</td>
+                        <td class="text-end fw-semibold">${{ "%.2f"|format(item.subtotal) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if purchase.notes %}
+        <div class="mt-4 p-3 bg-light rounded">
+            <strong>Notes / Dispatch Info:</strong>
+            <p class="mb-0 text-muted small mt-1">{{ purchase.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

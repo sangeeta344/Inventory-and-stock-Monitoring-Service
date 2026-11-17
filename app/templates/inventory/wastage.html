@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Record Wastage &amp; Spoilage{% endblock %}
+{% block page_title %}Inventory Wastage &amp; Damage Management{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Wastage Recording Form -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold mb-0 text-danger"><i class="bi bi-trash3 me-2"></i>Write-Off Damaged / Expired Inventory</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('inventory.wastage') }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Select Inventory Batch <span class="text-danger">*</span></label>
+                        <select name="batch_id" class="form-select" required>
+                            <option value="">Choose Batch...</option>
+                            {% for b in batches %}
+                            <option value="{{ b.id }}">
+                                {{ b.product.name }} (Batch: {{ b.batch_number }} | Remaining: {{ b.quantity_remaining }} {{ b.product.unit_of_measure }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Wastage Category <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="wastage_type" id="wasteDamaged" value="DAMAGED" checked>
+                                <label class="form-check-label" for="wasteDamaged">Broken / Damaged</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="wastage_type" id="wasteExpired" value="EXPIRED">
+                                <label class="form-check-label" for="wasteExpired">Past Expiry Date</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Quantity to Discard <span class="text-danger">*</span></label>
+                        <input type="number" min="1" name="quantity" class="form-control" placeholder="Number of items" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Reason / Inspection Notes</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Broken seal during transit, crushed packaging, or refrigerator cold-failure" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 fw-semibold" onclick="return confirm('Confirm write-off of this inventory? This will permanently deduct product stock.')">
+                        <i class="bi bi-x-octagon me-1"></i> Confirm &amp; Deduct from Stock
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Wastage History -->
+    <div class="col-lg-7">
+        <div class="table-custom">
+            <div class="p-3 border-bottom bg-white">
+                <h6 class="fw-bold mb-0">Recent Wastage Write-Offs</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Type</th>
+                            <th class="text-center">Units Lost</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in history %}
+                        <tr>
+                            <td class="text-muted small">{{ w.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <div class="fw-bold">{{ w.product.name }}</div>
+                                <small class="text-muted">Batch: {{ w.batch.batch_number if w.batch else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if w.movement_type == 'EXPIRED_WASTAGE' %}bg-warning-subtle text-warning-emphasis{% else %}bg-danger-subtle text-danger{% endif %}">
+                                    {{ w.movement_type }}
+                                </span>
+                            </td>
+                            <td class="text-center fw-bold text-danger">{{ w.quantity_change|abs }}</td>
+                            <td class="small text-muted">{{ w.notes }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No wastage records registered.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

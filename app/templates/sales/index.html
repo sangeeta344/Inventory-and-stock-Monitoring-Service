@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Sales History{% endblock %}
+{% block page_title %}Completed Sales &amp; Transactions{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-0">Sales Records &amp; Invoices</h5>
+        <small class="text-muted">Search transactions, view digital bills, check customer receipts, and review gross profits</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('billing.pos') }}" class="btn btn-primary fw-semibold">
+            <i class="bi bi-upc-scan me-1"></i> Open POS Terminal
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('sales.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <input type="text" name="invoice" class="form-control" placeholder="Search by Invoice #" value="{{ current_invoice }}">
+            </div>
+            {% if current_user.is_owner %}
+            <div class="col-md-2">
+                <select name="cashier_id" class="form-select">
+                    <option value="">All Cashiers</option>
+                    {% for c in cashiers %}
+                    <option value="{{ c.id }}" {% if current_cashier == c.id %}selected{% endif %}>{{ c.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="col-md-2">
+                <input type="date" name="start_date" class="form-control" title="Start Date" value="{{ current_start }}">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="end_date" class="form-control" title="End Date" value="{{ current_end }}">
+            </div>
+            <div class="col-md-2">
+                <select name="payment_method" class="form-select">
+                    <option value="all" {% if current_method == 'all' %}selected{% endif %}>All Payments</option>
+                    <option value="CASH" {% if current_method == 'CASH' %}selected{% endif %}>CASH</option>
+                    <option value="CARD" {% if current_method == 'CARD' %}selected{% endif %}>CARD</option>
+                    <option value="UPI" {% if current_method == 'UPI' %}selected{% endif %}>UPI/QR</option>
+                    <option value="DIGITAL" {% if current_method == 'DIGITAL' %}selected{% endif %}>DIGITAL</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-dark w-100 fw-medium"><i class="bi bi-filter"></i></button>
+                <a href="{{ url_for('sales.index') }}" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-clockwise"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sales Transactions Table -->
+<div class="table-custom">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Date &amp; Time</th>
+                    <th>Cashier</th>
+                    <th>Customer</th>
+                    <th class="text-center">Items</th>
+                    <th class="text-end">Subtotal</th>
+                    <th class="text-end">Tax</th>
+                    <th class="text-end">Grand Total</th>
+                    {% if current_user.is_owner %}
+                    <th class="text-end">Gross Profit</th>
+                    {% endif %}
+                    <th class="text-center">Method</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sales %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('billing.view_invoice', invoice_number=s.invoice_number) }}" class="fw-bold font-monospace text-primary text-decoration-none">
+                            {{ s.invoice_number }}
+                        </a>
+                    </td>
+                    <td class="small text-muted">{{ s.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ s.cashier.full_name if s.cashier else 'Staff' }}</td>
+                    <td>{{ s.customer_name or 'Walk-in' }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border">{{ s.items.count() }}</span>
+                    </td>
+                    <td class="text-end">${{ "%.2f"|format(s.subtotal) }}</td>
+                    <td class="text-end small text-muted">${{ "%.2f"|format(s.tax_amount) }}</td>
+                    <td class="text-end fw-bold text-dark">${{ "%.2f"|format(s.final_amount) }}</td>
+                    {% if current_user.is_owner %}
+                    <td class="text-end text-success fw-bold">${{ "%.2f"|format(s.gross_profit) }}</td>
+                    {% endif %}
+                    <td class="text-center">
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ s.payment_method }}</span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('billing.view_invoice', invoice_number=s.invoice_number) }}" class="btn btn-sm btn-outline-secondary" title="View &amp; Print Bill">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" class="text-center py-4 text-muted">No sales transactions found matching criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
