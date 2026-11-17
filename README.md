@@ -1,4 +1,5 @@
-# Smart Supermarket Management System (AI-Powered & Mobile POS)
+# Smart Supermarket Management System 
+
 
 A complete, production-grade, responsive web-based **Smart Supermarket Management System** and **Mobile Point-of-Sale (POS)** terminal built with Python Flask, MySQL, Bootstrap 5, Chart.js, ReportLab, and ZXing/HTML5 camera barcode scanning.
 
