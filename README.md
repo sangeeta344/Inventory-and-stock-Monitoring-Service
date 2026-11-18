@@ -1,7 +1,6 @@
 # Smart Supermarket Management System 
 
-
-A complete, production-grade, responsive web-based **Smart Supermarket Management System** and **Mobile Point-of-Sale (POS)** terminal built with Python Flask, MySQL, Bootstrap 5, Chart.js, ReportLab, and ZXing/HTML5 camera barcode scanning.
+A complete, production-grade, responsive web-based **Smart Supermarket Management System** and **Mobile Point-of-Sale (POS)** terminal built with Python Flask, SQLite / MySQL, Bootstrap 5, Chart.js, ReportLab, and ZXing/HTML5 camera barcode scanning. Fully containerized with Docker, Docker Compose, and Gunicorn.
 
 The system allows a supermarket owner to manage the entire store through **ONE centralized platform** without purchasing physical barcode scanner guns or thermal billing printers.
 
@@ -78,8 +77,9 @@ The system allows a supermarket owner to manage the entire store through **ONE c
 
 ## 🏗️ Technology Stack
 
+- **Containerization**: Docker, Docker Compose, Gunicorn WSGI
 - **Backend**: Python 3.13+, Flask, Flask-SQLAlchemy, Flask-Login, PyMySQL, Cryptography
-- **Database**: MySQL (with automatic SQLite fallback for instant offline/development runs)
+- **Database**: SQLite (default persistent bind-mount) / MySQL
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+), Bootstrap 5, Bootstrap Icons, Chart.js
 - **Barcode Engine**: HTML5-QRCode / ZXing
 - **Reporting**: ReportLab (PDF), OpenPyXL (Excel)
@@ -131,51 +131,78 @@ D:\Desktop\stockmarket\
 │   │       ├── billing.js       # POS cart, calculations, hotkeys
 │   │       └── dashboard.js     # Chart.js analytics graphs
 │   └── templates/               # Jinja2 responsive templates
-│       ├── base.html
-│       ├── auth/
-│       ├── dashboard/
-│       ├── products/
-│       ├── billing/
-│       ├── inventory/
-│       ├── suppliers/
-│       ├── purchases/
-│       ├── returns/
-│       ├── sales/
-│       ├── analytics/
-│       ├── expenses/
-│       ├── employees/
-│       └── reports/
 ├── tests/                       # Automated unit & integration tests
 │   ├── test_supermarket.py      # FEFO, POS, P&L, Reports, Auth tests
 │   └── test_routes.py           # Route & RBAC restriction tests
+├── Dockerfile                   # Python 3.13-slim image specification
+├── docker-compose.yml           # Docker Compose service definition
+├── .dockerignore                # Docker build context exclusions
+├── init_db.py                   # Safe, idempotent pre-flight DB initialization
 ├── seed_data.py                 # Initial seed data for supermarket
 ├── schema.sql                   # Normalized MySQL DDL schema
 ├── run.py                       # Application entrypoint
+├── requirements.txt             # Python dependencies
 ├── .env.example                 # Environment configuration template
 └── README.md                    # Project documentation
 ```
 
 ---
 
-## 🚀 Installation & Setup Instructions
+## 🐳 Running with Docker (Recommended)
 
-### 1. Clone or Open the Project
+The easiest and most reliable way to run the service is using Docker and Docker Compose. All data is persisted in `supermarket.db` on your host machine.
+
+### 1. Build and Start the Application
+In your project directory, run:
+
 ```bash
-cd D:\Desktop\stockmarket
+docker compose up -d --build
 ```
 
-### 2. Install Required Python Packages
+### 2. Access the Application
+Open your web browser and visit:
+👉 **[http://localhost:5000](http://localhost:5000)**
+
+### 3. Common Docker Commands
+
+- **Check container status:**
+  ```bash
+  docker ps
+  ```
+- **View live container logs:**
+  ```bash
+  docker compose logs -f web
+  ```
+- **Stop the container:**
+  ```bash
+  docker compose down
+  ```
+- **Restart the container:**
+  ```bash
+  docker compose restart
+  ```
+- **Run automated tests inside the container:**
+  ```bash
+  docker compose exec web python -m unittest discover tests
+  ```
+
+> **Note on Auto-Start:** The container is configured with `restart: unless-stopped`. Once started, it runs in the background and will automatically start up whenever Docker Desktop boots or your computer restarts.
+
+---
+
+## 💻 Manual Setup (Without Docker)
+
+If you prefer running directly in a local Python virtual environment:
+
+### 1. Install Dependencies
 ```bash
-python -m pip install flask flask-login flask-sqlalchemy pymysql reportlab openpyxl python-dotenv cryptography
+python -m pip install -r requirements.txt
 ```
 
-### 3. Database Configuration (MySQL)
-Create a `.env` file in the root directory (or copy from `.env.example`):
+### 2. Configure Environment
+Copy `.env.example` to `.env`:
 ```ini
-
-
-
-# Store Information
+USE_SQLITE=true
 STORE_NAME=Smart Supermarket & HyperMart
 STORE_ADDRESS=100 Market Boulevard, Central Commercial District
 STORE_PHONE=+1 (555) 987-6543
@@ -184,20 +211,26 @@ STORE_TAX_NUMBER=GSTIN-98AABCS1234F1Z8
 STORE_DEFAULT_TAX_RATE=5.0
 ```
 
-> **Note**: Passwords with special characters (such as `@`, `#`, `$`, `%`) are automatically URL-encoded by `app/config.py`. The system also auto-creates the `smart_supermarket` database if it does not exist yet.
-
-### 4. Seed Initial Supermarket Data
-Run the seeding script to populate users, products with barcodes, inventory batches, and suppliers:
+### 3. Initialize & Seed Database (First Time Only)
 ```bash
-python seed_data.py
+python init_db.py
 ```
 
-### 5. Run the Application
+### 4. Run Development Server
 ```bash
 python run.py
 ```
-Open your browser and navigate to:
-👉 **[http://localhost:5000](http://localhost:5000)**
+Open **[http://localhost:5000](http://localhost:5000)** in your browser.
+
+---
+
+## 👥 Default Login Credentials
+
+| Role | Username | Password | Permitted Modules |
+| :--- | :--- | :--- | :--- |
+| **OWNER** | `owner` | `owner123` | Full access: Dashboard, Products, Inventory, FEFO Batches, Suppliers, Purchases, Sales, P&L, Analytics, Expenses, Staff, Reports |
+| **CASHIER** | `cashier1` | `cashier123` | POS Terminal, Barcode Scanning, Billing Cart, Customer Returns, Permitted Sales History |
+| **CASHIER** | `cashier2` | `cashier123` | POS Terminal, Barcode Scanning, Billing Cart, Customer Returns, Permitted Sales History |
 
 ---
 
@@ -212,7 +245,7 @@ Mobile web browsers (Chrome on Android, Safari on iOS) enforce a strict security
    - Hold up a product barcode (e.g. barcode `8901234567890`) to your webcam. The system will beep and immediately add the item to your bill!
 3. **Smartphone Testing on Local Wi-Fi**:
    - **Option A (USB Port Forwarding)**: Connect your phone to your PC via USB and use Chrome DevTools port forwarding (`chrome://inspect/#devices`) to forward port `5000` to your smartphone. On your phone, visit `http://localhost:5000`.
-   - **Option B (HTTPS Tunnel)**: Expose the Flask development server via an HTTPS tunnel (e.g. `ngrok http 5000` or Cloudflare Tunnel) and open the secure URL on your phone camera.
+   - **Option B (HTTPS Tunnel)**: Expose the server via an HTTPS tunnel (e.g. `ngrok http 5000` or Cloudflare Tunnel) and open the secure URL on your phone camera.
 4. **Barcode Emulation (Without Camera)**:
    - Type or paste any of the pre-seeded barcodes into the barcode input box and press **Enter**:
      - `8901234567890` &rarr; Fresh Whole Milk 1L ($3.49)
@@ -226,8 +259,13 @@ Mobile web browsers (Chrome on Android, Safari on iOS) enforce a strict security
 
 ## 🧪 Running Automated Tests
 
-The project includes a comprehensive 13-test test suite:
+Run the full 13-test test suite:
+
 ```bash
+# Inside Docker
+docker compose exec web python -m unittest discover tests
+
+# Or locally
 python -m unittest discover tests
 ```
 
@@ -239,13 +277,3 @@ This verifies:
 - Resellable vs damaged customer returns
 - Profit & Loss calculations
 - ReportLab PDF and OpenPyXL Excel generation
-
----
-
-## 👥 Default Login Credentials
-
-| Role | Username | Password | Permitted Modules |
-| :--- | :--- | :--- | :--- |
-| **OWNER** | `owner` | `owner123` | Full access: Dashboard, Products, Inventory, FEFO Batches, Suppliers, Purchases, Sales, P&L, Analytics, Expenses, Staff, Reports |
-| **CASHIER** | `cashier1` | `cashier123` | POS Terminal, Barcode Scanning, Billing Cart, Customer Returns, Permitted Sales History |
-| **CASHIER** | `cashier2` | `cashier123` | POS Terminal, Barcode Scanning, Billing Cart, Customer Returns, Permitted Sales History |

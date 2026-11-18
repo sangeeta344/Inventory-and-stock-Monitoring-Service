@@ -1,0 +1,17 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supermarket_web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - USE_SQLITE=true
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./supermarket.db:/app/supermarket.db
