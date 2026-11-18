@@ -172,17 +172,8 @@ python -m pip install flask flask-login flask-sqlalchemy pymysql reportlab openp
 ### 3. Database Configuration (MySQL)
 Create a `.env` file in the root directory (or copy from `.env.example`):
 ```ini
-SECRET_KEY=smart-supermarket-secret-key-prod-987654321
 
-# MySQL Database Settings
-DB_USER=root
-DB_PASSWORD=your_actual_mysql_password
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=smart_supermarket
 
-# Set to true to force local SQLite development mode
-USE_SQLITE=false
 
 # Store Information
 STORE_NAME=Smart Supermarket & HyperMart
