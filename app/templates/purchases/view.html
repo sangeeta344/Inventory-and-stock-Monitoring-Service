@@ -44,8 +44,10 @@
                         <th>Batch Assigned</th>
                         <th>Expiry Date</th>
                         <th class="text-center">Quantity</th>
+                        {% if purchase.status != 'PENDING_APPROVAL' %}<th class="text-center">Approved Quantity</th>{% endif %}
                         <th class="text-end">Unit Cost</th>
                         <th class="text-end">Subtotal</th>
+                        {% if purchase.status == 'PENDING_APPROVAL' and current_user.is_owner %}<th class="text-center">Verified Quantity</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -56,13 +58,53 @@
                         <td><span class="badge bg-light text-dark border">{{ item.batch_number }}</span></td>
                         <td>{{ item.expiry_date.strftime('%Y-%m-%d') if item.expiry_date else 'N/A' }}</td>
                         <td class="text-center fw-bold">{{ item.quantity }} {{ item.product.unit_of_measure }}</td>
+                        {% if purchase.status != 'PENDING_APPROVAL' %}
+                        <td class="text-center fw-bold">
+                            {% if purchase.status == 'APPROVED' %}{{ item.approved_quantity if item.approved_quantity is not none else item.quantity }}{% else %}—{% endif %}
+                        </td>
+                        {% endif %}
                         <td class="text-end">${{ "%.2f"|format(item.unit_price) }}</td>
                         <td class="text-end fw-semibold">${{ "%.2f"|format(item.subtotal) }}</td>
+                        {% if purchase.status == 'PENDING_APPROVAL' and current_user.is_owner %}
+                        <td class="text-center"><input form="approveForm" type="number" min="0" name="approved_quantity_{{ item.id }}" value="{{ item.quantity }}" class="form-control form-control-sm text-center"></td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        {% if purchase.status in ['APPROVED', 'REJECTED'] %}
+        <div class="mt-3 small">
+            <strong>Decision:</strong>
+            <span class="badge {% if purchase.status == 'APPROVED' %}bg-success{% else %}bg-danger{% endif %}">{{ purchase.status }}</span>
+            {% if purchase.approved_by_user %}by {{ purchase.approved_by_user.full_name }}{% endif %}
+            {% if purchase.approved_at %}at {{ purchase.approved_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}
+            {% if purchase.rejection_reason %}<div class="text-danger mt-1">Reason: {{ purchase.rejection_reason }}</div>{% endif %}
+            {% for item in purchase.items %}
+                {% if item.quantity_adjustment_reason %}
+                <div class="text-warning-emphasis mt-1">{{ item.product.name }} quantity adjustment: {{ item.quantity_adjustment_reason }}</div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if purchase.status == 'PENDING_APPROVAL' and current_user.is_owner %}
+        <form id="approveForm" action="{{ url_for('purchases.approve_purchase', id=purchase.id) }}" method="POST" class="mt-4 p-3 border rounded">
+            <label class="form-label fw-semibold">Quantity adjustment reason <span class="text-muted">(required only if a quantity changes)</span></label>
+            <input type="text" name="quantity_adjustment_reason" class="form-control mb-3" placeholder="Example: Physical count found 5 damaged units">
+            <div class="d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Approve Stock</button>
+            </div>
+        </form>
+        <form action="{{ url_for('purchases.reject_purchase', id=purchase.id) }}" method="POST" class="mt-2 p-3 border rounded">
+            <label class="form-label fw-semibold">Rejection reason</label>
+            <div class="d-flex gap-2">
+                <input type="text" name="rejection_reason" class="form-control" required>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle me-1"></i>Reject</button>
+            </div>
+        </form>
+        {% endif %}
 
         {% if purchase.notes %}
         <div class="mt-4 p-3 bg-light rounded">

@@ -6,7 +6,7 @@
 {% block content %}
 <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0 fw-bold"><i class="bi bi-bag-plus text-primary me-2"></i>Receive Goods &amp; Auto-Update Stock</h5>
+        <h5 class="card-title mb-0 fw-bold"><i class="bi bi-bag-plus text-primary me-2"></i>Submit Incoming Stock</h5>
         <a href="{{ url_for('purchases.index') }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Purchases
         </a>
@@ -17,12 +17,17 @@
             <div class="row g-3 mb-4 p-3 bg-light rounded-3">
                 <div class="col-md-4">
                     <label class="form-label small fw-semibold text-secondary">Supplier / Vendor <span class="text-danger">*</span></label>
-                    <select name="supplier_id" class="form-select" required>
+                    <select name="supplier_id" class="form-select" id="supplierSelect">
                         <option value="">Select Supplier...</option>
                         {% for s in suppliers %}
                         <option value="{{ s.id }}">{{ s.company_name }} ({{ s.name }})</option>
                         {% endfor %}
                     </select>
+                    <div class="mt-2" id="newSupplierFields">
+                        <input type="text" name="new_supplier_name" class="form-control form-control-sm mb-1" placeholder="New supplier contact name">
+                        <input type="text" name="new_supplier_company" class="form-control form-control-sm mb-1" placeholder="New supplier company">
+                        <input type="text" name="new_supplier_phone" class="form-control form-control-sm" placeholder="Supplier phone">
+                    </div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small fw-semibold text-secondary">Supplier Invoice # <span class="text-danger">*</span></label>
@@ -102,13 +107,13 @@
 
             <div class="alert alert-info border-0 py-2 small d-flex align-items-center gap-2">
                 <i class="bi bi-info-circle-fill fs-5"></i>
-                <span>All items marked here will be automatically registered into separate FEFO inventory batches, and product warehouse stock will be instantly updated.</span>
+                <span>Submitted quantities remain pending and do not change inventory until owner approval.</span>
             </div>
 
             <div class="text-end pt-2">
                 <a href="{{ url_for('purchases.index') }}" class="btn btn-outline-secondary px-3 me-2">Cancel</a>
                 <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                    <i class="bi bi-check-circle me-1"></i> Receive Order &amp; Increase Stock
+                    <i class="bi bi-send me-1"></i> Submit for Approval
                 </button>
             </div>
         </form>
@@ -116,6 +121,16 @@
 </div>
 
 <script>
+    const supplierSelect = document.getElementById('supplierSelect');
+    const newSupplierFields = document.getElementById('newSupplierFields');
+    function toggleNewSupplier() {
+        newSupplierFields.style.display = supplierSelect.value ? 'none' : 'block';
+    }
+    if (supplierSelect) {
+        supplierSelect.addEventListener('change', toggleNewSupplier);
+        toggleNewSupplier();
+    }
+
     function handleProductSelect(selectEl) {
         const option = selectEl.options[selectEl.selectedIndex];
         const defaultPrice = option.getAttribute('data-price');

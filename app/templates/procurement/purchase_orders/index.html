@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Purchase Orders{% endblock %}
+{% block page_title %}Purchase Orders{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h5 class="fw-bold mb-0">Purchase Orders</h5><a href="{{ url_for('procurement.purchase_order_new') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New Purchase Order</a></div>
+<div class="table-responsive table-custom"><table class="table align-middle"><thead><tr><th>Invoice</th><th>Supplier</th><th>Date</th><th>Status</th><th class="text-end">Total</th><th></th></tr></thead><tbody>
+{% for p in purchases %}<tr><td class="fw-bold">{{ p.invoice_number }}</td><td>{{ p.supplier.company_name }}</td><td>{{ p.purchase_date }}</td><td><span class="badge bg-secondary">{{ p.order_status or p.status }}</span></td><td class="text-end">${{ "%.2f"|format(p.total_amount) }}</td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('purchases.view_purchase', id=p.id) }}">View</a></td></tr>{% else %}<tr><td colspan="6" class="text-center text-muted py-4">No purchase orders.</td>{% endfor %}
+</tbody></table></div>
+{% endblock %}

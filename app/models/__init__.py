@@ -9,6 +9,16 @@ from .purchase import Purchase, PurchaseItem
 from .sale import Sale, SaleItem, Return, ReturnItem
 from .expense import Expense
 from .notification import Notification
+from .procurement import (
+    StockRequirement,
+    StockRequirementItem,
+    SupplierInvoice,
+    SupplierPayment,
+    GoodsReceivingReport,
+    GoodsReceivingItem,
+    GoodsReceivingCorrection,
+    GoodsReceivingCorrectionItem
+)
 
 __all__ = [
     'db',
@@ -27,5 +37,13 @@ __all__ = [
     'Return',
     'ReturnItem',
     'Expense',
-    'Notification'
+    'Notification',
+    'StockRequirement',
+    'StockRequirementItem',
+    'SupplierInvoice',
+    'SupplierPayment',
+    'GoodsReceivingReport',
+    'GoodsReceivingItem',
+    'GoodsReceivingCorrection',
+    'GoodsReceivingCorrectionItem'
 ]

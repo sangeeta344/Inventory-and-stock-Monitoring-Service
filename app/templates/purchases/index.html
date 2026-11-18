@@ -6,12 +6,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
-        <h5 class="fw-bold mb-0">Purchases &amp; Receiving History</h5>
-        <small class="text-muted">Track wholesale purchase orders, supplier invoices, and automatic inventory stock increments</small>
+        <h5 class="fw-bold mb-0">{% if current_user.is_owner %}Stock Approval Requests{% else %}My Stock Requests{% endif %}</h5>
+        <small class="text-muted">Incoming deliveries require owner approval before inventory changes</small>
     </div>
+    {% if current_user.is_cashier %}
     <a href="{{ url_for('purchases.new_purchase') }}" class="btn btn-primary fw-semibold">
-        <i class="bi bi-bag-plus me-1"></i> New Purchase &amp; Stock In
+        <i class="bi bi-bag-plus me-1"></i> Receive Existing Stock
     </a>
+    {% endif %}
 </div>
 
 <!-- Purchases List -->
@@ -55,7 +57,15 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>RECEIVED</span>
+                        {% if p.status == 'PENDING_APPROVAL' %}
+                            <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>PENDING</span>
+                        {% elif p.status == 'APPROVED' %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>APPROVED</span>
+                        {% elif p.status == 'REJECTED' %}
+                            <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>REJECTED</span>
+                        {% else %}
+                            <span class="badge bg-secondary">RECEIVED</span>
+                        {% endif %}
                     </td>
                     <td class="text-end">
                         <a href="{{ url_for('purchases.view_purchase', id=p.id) }}" class="btn btn-sm btn-outline-secondary">

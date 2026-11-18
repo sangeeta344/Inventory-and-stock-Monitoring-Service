@@ -63,6 +63,41 @@ def create_app(config_class=Config):
     db.init_app(app)
     login_manager.init_app(app)
 
+    # Add approval/audit columns safely to existing databases without replacing records.
+    with app.app_context():
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            purchase_columns = {c['name'] for c in inspector.get_columns('purchases')}
+            item_columns = {c['name'] for c in inspector.get_columns('purchase_items')}
+
+            additions = []
+            if 'approved_by' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN approved_by INTEGER")
+            if 'approved_at' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN approved_at DATETIME")
+            if 'rejection_reason' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN rejection_reason TEXT")
+            if 'stock_requirement_id' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN stock_requirement_id INTEGER")
+            if 'order_status' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN order_status VARCHAR(30)")
+            if 'ordered_by' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN ordered_by INTEGER")
+            if 'ordered_at' not in purchase_columns:
+                additions.append("ALTER TABLE purchases ADD COLUMN ordered_at DATETIME")
+            if 'approved_quantity' not in item_columns:
+                additions.append("ALTER TABLE purchase_items ADD COLUMN approved_quantity INTEGER")
+            if 'quantity_adjustment_reason' not in item_columns:
+                additions.append("ALTER TABLE purchase_items ADD COLUMN quantity_adjustment_reason TEXT")
+
+            for statement in additions:
+                db.session.execute(text(statement))
+            if additions:
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     # Register Blueprints
     from app.routes.auth_routes import auth_bp
     from app.routes.dashboard_routes import dashboard_bp
@@ -77,6 +112,7 @@ def create_app(config_class=Config):
     from app.routes.expense_routes import expense_bp
     from app.routes.employee_routes import employee_bp
     from app.routes.report_routes import report_bp
+    from app.routes.procurement_routes import procurement_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -91,6 +127,7 @@ def create_app(config_class=Config):
     app.register_blueprint(expense_bp)
     app.register_blueprint(employee_bp)
     app.register_blueprint(report_bp)
+    app.register_blueprint(procurement_bp)
 
     # Context processors
     @app.context_processor

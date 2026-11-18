@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Goods Receiving{% endblock %}
+{% block page_title %}Goods Receiving{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm"><div class="card-header"><h5 class="mb-0">Receive Purchase Order {{ purchase.invoice_number }}</h5></div><div class="card-body p-4">
+<form method="POST">
+<div class="row g-3 mb-3">
+<div class="col-md-3"><label class="form-label">Delivery Date</label><input type="date" name="delivery_date" class="form-control" required></div>
+<div class="col-md-3"><label class="form-label">Supplier Invoice</label><input name="invoice_number" class="form-control" value="{{ purchase.invoice_number }}"></div>
+<div class="col-md-3"><label class="form-label">Delivery Reference</label><input name="delivery_reference" class="form-control"></div>
+<div class="col-md-12"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+</div>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Product</th><th>Ordered</th><th>Delivered</th><th>Accepted</th><th>Damaged</th><th>Rejected</th><th>Batch</th><th>Expiry</th><th>Reason</th></tr></thead><tbody>
+{% for item in purchase.items %}<tr>
+<td>{{ item.product.name }}<input type="hidden" name="purchase_item_id[]" value="{{ item.id }}"></td>
+<td>{{ item.quantity }}</td>
+<td><input type="number" name="delivered[]" min="0" class="form-control form-control-sm" required></td>
+<td><input type="number" name="accepted[]" min="0" class="form-control form-control-sm" required></td>
+<td><input type="number" name="damaged[]" min="0" value="0" class="form-control form-control-sm" required></td>
+<td><input type="number" name="rejected[]" min="0" value="0" class="form-control form-control-sm" required></td>
+<td><input type="text" name="batch_number[]" class="form-control form-control-sm"></td>
+<td><input type="date" name="expiry_date[]" class="form-control form-control-sm"></td>
+<td><input type="text" name="reason[]" class="form-control form-control-sm"></td>
+</tr>{% endfor %}
+</tbody></table></div>
+<div class="alert alert-info">Delivered must equal Accepted + Damaged + Rejected. Accepted stock is added immediately on submission.</div>
+<div class="text-end"><a href="{{ url_for('procurement.receiving_reports_index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary">Submit Receiving Report</button></div>
+</form></div></div>
+{% endblock %}

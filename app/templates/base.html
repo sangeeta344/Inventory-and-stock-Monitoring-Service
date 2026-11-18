@@ -32,7 +32,7 @@
         </div>
 
         <ul class="sidebar-menu">
-            <!-- Universal POS Link (For both Owner and Cashier) -->
+            {% if current_user.is_authenticated and current_user.is_cashier %}
             <li class="sidebar-heading">Point of Sale</li>
             <li class="sidebar-item">
                 <a href="{{ url_for('billing.pos') }}" class="sidebar-link {% if request.endpoint == 'billing.pos' %}active{% endif %}">
@@ -52,6 +52,61 @@
                     <span>Customer Returns</span>
                 </a>
             </li>
+            {% elif current_user.is_authenticated and current_user.is_owner %}
+            <li class="sidebar-heading">Sales Monitoring</li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('sales.index') }}" class="sidebar-link {% if request.endpoint == 'sales.index' %}active{% endif %}">
+                    <i class="bi bi-receipt"></i>
+                    <span>Sales Records</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if current_user.is_authenticated and current_user.is_cashier %}
+            <li class="sidebar-heading">Cashier Operations</li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('dashboard.staff_dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard.staff_dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid"></i>
+                    <span>Staff Dashboard</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('products.add_product') }}" class="sidebar-link {% if request.endpoint == 'products.add_product' %}active{% endif %}">
+                    <i class="bi bi-plus-square"></i>
+                    <span>Add Product</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('purchases.new_purchase') }}" class="sidebar-link {% if request.endpoint == 'purchases.new_purchase' %}active{% endif %}">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <span>Stock Requests</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('procurement.requirements_index') }}" class="sidebar-link {% if request.endpoint.startswith('procurement.requirement') %}active{% endif %}">
+                    <i class="bi bi-list-check"></i>
+                    <span>My Requirements</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('procurement.receiving_reports_index') }}" class="sidebar-link {% if request.endpoint.startswith('procurement.receiving') %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Receiving Reports</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('products.categories') }}" class="sidebar-link {% if request.endpoint == 'products.categories' %}active{% endif %}">
+                    <i class="bi bi-tags"></i>
+                    <span>Categories</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('purchases.index') }}" class="sidebar-link {% if request.endpoint in ['purchases.index', 'purchases.view_purchase'] %}active{% endif %}">
+                    <i class="bi bi-clock-history"></i>
+                    <span>My Requests</span>
+                </a>
+            </li>
+            {% endif %}
 
             <!-- OWNER Only Navigation -->
             {% if current_user.is_authenticated and current_user.is_owner %}
@@ -133,6 +188,24 @@
                 </a>
             </li>
             <li class="sidebar-item">
+                <a href="{{ url_for('procurement.requirements_index') }}" class="sidebar-link {% if request.endpoint.startswith('procurement.requirement') %}active{% endif %}">
+                    <i class="bi bi-list-check"></i>
+                    <span>Stock Requirements</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('procurement.purchase_orders_index') }}" class="sidebar-link {% if request.endpoint.startswith('procurement.purchase_order') %}active{% endif %}">
+                    <i class="bi bi-bag-check"></i>
+                    <span>Purchase Orders</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
+                <a href="{{ url_for('procurement.receiving_reports_index') }}" class="sidebar-link {% if request.endpoint.startswith('procurement.receiving') %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Receiving Reports</span>
+                </a>
+            </li>
+            <li class="sidebar-item">
                 <a href="{{ url_for('expenses.index') }}" class="sidebar-link {% if request.endpoint == 'expenses.index' %}active{% endif %}">
                     <i class="bi bi-wallet2"></i>
                     <span>Operating Expenses</span>
@@ -149,7 +222,7 @@
             <li class="sidebar-item">
                 <a href="{{ url_for('employees.activity_logs') }}" class="sidebar-link {% if request.endpoint == 'employees.activity_logs' %}active{% endif %}">
                     <i class="bi bi-shield-check"></i>
-                    <span>System Audit Trail</span>
+                    <span>Staff Activity</span>
                 </a>
             </li>
             {% endif %}

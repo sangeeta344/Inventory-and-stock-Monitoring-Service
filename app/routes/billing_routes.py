@@ -2,13 +2,14 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from flask_login import login_required, current_user
 from app.models import db, Product, Category, Sale, SaleItem
 from app.services.billing_service import BillingService
-from app.services.auth_service import log_audit
+from app.services.auth_service import log_audit, role_required
 from datetime import datetime
 
 billing_bp = Blueprint('billing', __name__)
 
 @billing_bp.route('/billing')
 @login_required
+@role_required('CASHIER')
 def pos():
     """
     Main Point-of-Sale (POS) Billing Terminal.
@@ -30,6 +31,7 @@ def pos():
 
 @billing_bp.route('/api/billing/product-lookup/<barcode>')
 @login_required
+@role_required('CASHIER')
 def lookup_barcode(barcode):
     """
     API endpoint invoked immediately after mobile camera or barcode scanner scans a barcode.
@@ -56,6 +58,7 @@ def lookup_barcode(barcode):
 
 @billing_bp.route('/api/billing/search-products')
 @login_required
+@role_required('CASHIER')
 def search_products():
     """
     Typeahead search for products by name, barcode, or category.
@@ -89,6 +92,7 @@ def search_products():
 
 @billing_bp.route('/api/billing/checkout', methods=['POST'])
 @login_required
+@role_required('CASHIER')
 def checkout():
     """
     Processes final cart checkout and generates invoice.

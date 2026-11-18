@@ -9,7 +9,7 @@ inventory_bp = Blueprint('inventory', __name__)
 
 @inventory_bp.route('/inventory')
 @login_required
-@role_required('OWNER')
+@role_required('OWNER', 'CASHIER')
 def index():
     status = request.args.get('status', 'all') # 'all', 'near_expiry', 'expired', 'active'
     product_id = request.args.get('product_id', type=int)
@@ -44,7 +44,7 @@ def index():
 
 @inventory_bp.route('/inventory/movements')
 @login_required
-@role_required('OWNER')
+@role_required('OWNER', 'CASHIER')
 def movements():
     movement_type = request.args.get('type', 'all')
     product_id = request.args.get('product_id', type=int)
@@ -116,7 +116,7 @@ def wastage():
 
 @inventory_bp.route('/inventory/alerts')
 @login_required
-@role_required('OWNER')
+@role_required('OWNER', 'CASHIER')
 def alerts():
     InventoryService.scan_for_system_alerts()
     all_notifications = Notification.query.order_by(Notification.created_at.desc()).limit(100).all()

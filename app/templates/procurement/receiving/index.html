@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Receiving Reports{% endblock %}
+{% block page_title %}Goods Receiving Reports{% endblock %}
+{% block content %}
+<h5 class="fw-bold mb-3">Goods Receiving Reports</h5>
+<div class="table-responsive table-custom"><table class="table align-middle"><thead><tr><th>Report</th><th>Purchase</th><th>Submitted By</th><th>Status</th><th>Delivered</th><th>Inventory</th><th></th></tr></thead><tbody>
+{% for r in reports %}<tr><td class="fw-bold">{{ r.report_number }}</td><td>{{ r.purchase.invoice_number }}</td><td>{{ r.submitter.full_name }}</td><td><span class="badge {% if r.status=='APPROVED' %}bg-success{% elif r.status=='CORRECTED' %}bg-info{% else %}bg-warning text-dark{% endif %}">{{ r.status }}</span></td><td>{{ r.items.count() }} lines</td><td>{% if r.inventory_applied %}<span class="badge bg-success">Applied</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td><td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('procurement.receiving_report_view', id=r.id) }}">View</a></td></tr>{% else %}<tr><td colspan="7" class="text-center text-muted py-4">No receiving reports.</td>{% endfor %}
+</tbody></table></div>
+{% endblock %}

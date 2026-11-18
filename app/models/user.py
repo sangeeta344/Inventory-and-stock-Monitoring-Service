@@ -20,7 +20,7 @@ class User(UserMixin, db.Model):
     # Relationships
     employee_profile = db.relationship('Employee', backref='user', uselist=False, cascade='all, delete-orphan')
     sales = db.relationship('Sale', backref='cashier', lazy='dynamic')
-    purchases = db.relationship('Purchase', backref='created_by_user', lazy='dynamic')
+    purchases = db.relationship('Purchase', foreign_keys='Purchase.created_by', backref='created_by_user', lazy='dynamic')
     audit_logs = db.relationship('AuditLog', backref='user', lazy='dynamic')
 
     def set_password(self, password):

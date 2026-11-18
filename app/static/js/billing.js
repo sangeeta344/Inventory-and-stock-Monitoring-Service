@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Barcode Scanner Controller
     const scanner = new BarcodeScannerController('reader', onBarcodeDetected);
     window.posScanner = scanner;
+    scanner.populateCameraSelect();
+    window.addEventListener('pagehide', () => scanner.stopScanning());
 
     const btnStartCamera = document.getElementById('btn-start-camera');
     if (btnStartCamera) {
@@ -22,7 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const scannerContainer = document.getElementById('scanner-modal-wrapper');
             scannerContainer.classList.toggle('d-none');
             if (!scannerContainer.classList.contains('d-none')) {
-                scanner.startScanning("environment");
+                const cameraSelect = document.getElementById('camera-select');
+                const selectedCamera = cameraSelect && cameraSelect.value ? cameraSelect.value : 'environment';
+                scanner.startScanning(selectedCamera);
                 btnStartCamera.innerHTML = '<i class="bi bi-camera-video-off me-1"></i> Close Camera';
                 btnStartCamera.classList.replace('btn-outline-primary', 'btn-danger');
             } else {

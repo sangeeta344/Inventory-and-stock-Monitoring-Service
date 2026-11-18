@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Receiving {{ report.report_number }}{% endblock %}
+{% block page_title %}Goods Receiving Report{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm"><div class="card-header d-flex justify-content-between"><h5 class="mb-0">{{ report.report_number }}</h5><span class="badge bg-secondary">{{ report.status }}</span></div><div class="card-body">
+<div class="row g-3 mb-3"><div class="col-md-3"><strong>Purchase:</strong> {{ report.purchase.invoice_number }}</div><div class="col-md-3"><strong>Supplier:</strong> {{ report.purchase.supplier.company_name }}</div><div class="col-md-3"><strong>Submitted by:</strong> {{ report.submitter.full_name }}</div><div class="col-md-3"><strong>Delivery date:</strong> {{ report.delivery_date }}</div></div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Product</th><th>Ordered</th><th>Delivered</th><th>Accepted</th><th>Damaged</th><th>Rejected</th><th>Outstanding</th><th>Batch</th></tr></thead><tbody>{% for item in report.items %}
+<tr><td>{{ item.product.name }}</td><td>{{ item.ordered_quantity }}</td><td>{{ item.delivered_quantity }}</td><td>{{ item.accepted_quantity }}</td><td>{{ item.damaged_quantity }}</td><td>{{ item.rejected_quantity }}</td><td>{{ item.outstanding_quantity }}</td><td>{{ item.batch_number or '-' }}</td></tr>{% endfor %}</tbody></table></div>
+{% if current_user.is_owner %}
+<form method="POST" action="{{ url_for('procurement.receiving_report_review', id=report.id) }}" class="border rounded p-3 mb-3">
+<div class="row g-2"><div class="col-md-3"><select name="action" class="form-select"><option value="APPROVED">Approve</option><option value="CORRECTION_REQUIRED">Require Correction</option></select></div><div class="col-md-7"><input name="reason" class="form-control" placeholder="Review reason"></div><div class="col-md-2"><button class="btn btn-primary w-100">Submit Review</button></div></div>
+</form>
+{% endif %}
+<form method="POST" action="{{ url_for('procurement.receiving_report_correct', id=report.id) }}" class="border rounded p-3">
+<h6>Correct Receiving Quantities</h6><p class="small text-muted">The original report remains unchanged. Corrections create compensating stock movements.</p>
+{% for item in report.items %}<div class="row g-2 mb-2"><div class="col-md-3"><strong>{{ item.product.name }}</strong></div><div class="col-md-3"><input type="number" name="accepted_{{ item.id }}" value="{{ item.accepted_quantity }}" min="0" class="form-control" required></div><div class="col-md-2"><input type="number" name="damaged_{{ item.id }}" value="{{ item.damaged_quantity }}" min="0" class="form-control" required></div><div class="col-md-2"><input type="number" name="rejected_{{ item.id }}" value="{{ item.rejected_quantity }}" min="0" class="form-control" required></div></div>{% endfor %}
+<input name="correction_reason" class="form-control mb-2" required placeholder="Correction reason">
+<button class="btn btn-warning">Apply Correction</button>
+</form>
+</div></div>
+{% endblock %}

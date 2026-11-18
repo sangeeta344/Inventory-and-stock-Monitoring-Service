@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}New Purchase Order{% endblock %}
+{% block page_title %}New Purchase Order{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm"><div class="card-body p-4"><form method="POST">
+<div class="row g-3 mb-3">
+<div class="col-md-4"><label class="form-label">Approved Stock Requirement</label><select name="stock_requirement_id" class="form-select"><option value="">Direct order</option>{% for r in requirements %}<option value="{{ r.id }}">{{ r.request_number }}</option>{% endfor %}</select></div>
+<div class="col-md-4"><label class="form-label">Supplier</label><select name="supplier_id" class="form-select" required><option value="">Select supplier</option>{% for s in suppliers %}<option value="{{ s.id }}">{{ s.company_name }}</option>{% endfor %}</select></div>
+<div class="col-md-2"><label class="form-label">Invoice</label><input name="invoice_number" class="form-control" required></div>
+<div class="col-md-2"><label class="form-label">Purchase Date</label><input type="date" name="purchase_date" class="form-control" value="{{ now_date if now_date else '' }}"></div>
+</div>
+<table class="table align-middle" id="orderTable"><thead><tr><th>Product</th><th>Ordered Quantity</th><th>Unit Price</th><th></th></tr></thead><tbody><tr><td><select name="product_id[]" class="form-select" required><option value="">Select</option>{% for p in products %}<option value="{{ p.id }}" data-price="{{ p.purchase_price }}">{{ p.name }}</option>{% endfor %}</select></td><td><input type="number" name="quantity[]" min="1" class="form-control" required></td><td><input type="number" name="unit_price[]" min="0" step="0.01" class="form-control" required></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">Remove</button></td></tr></tbody></table>
+<button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addOrderRow()">Add Line</button>
+<div class="text-end"><a href="{{ url_for('procurement.purchase_orders_index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary">Create Purchase Order</button></div>
+</form></div></div>
+<script>
+function addOrderRow(){const tbody=document.querySelector('#orderTable tbody');const row=tbody.rows[0].cloneNode(true);row.querySelectorAll('input').forEach(i=>i.value='');row.querySelectorAll('select').forEach(s=>s.selectedIndex=0);tbody.appendChild(row);}
+document.querySelectorAll('#orderTable select[name="product_id[]"]').forEach(s=>s.addEventListener('change',function(){const price=this.options[this.selectedIndex].dataset.price||'';this.closest('tr').querySelector('[name="unit_price[]"]').value=price;}));
+</script>
+{% endblock %}

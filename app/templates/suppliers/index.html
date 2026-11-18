@@ -44,6 +44,9 @@
                     </td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('procurement.supplier_payments', supplier_id=s.id) }}" class="btn btn-outline-success" title="Payments">
+                                <i class="bi bi-currency-dollar"></i>
+                            </a>
                             <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editSupplierModal{{ s.id }}" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </button>

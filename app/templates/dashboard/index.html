@@ -135,6 +135,34 @@
             <small class="text-muted">Active Partners</small>
         </div>
     </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <a href="{{ url_for('purchases.index') }}" class="card-stat p-3 d-block text-decoration-none">
+            <span class="stat-label">Pending Approvals</span>
+            <h4 class="stat-val my-1 text-warning">{{ pending_approvals }}</h4>
+            <small class="text-muted">Stock requests</small>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <a href="{{ url_for('procurement.requirements_index') }}" class="card-stat p-3 d-block text-decoration-none">
+            <span class="stat-label">Stock Requirements</span>
+            <h4 class="stat-val my-1 text-warning">{{ pending_requirements }}</h4>
+            <small class="text-muted">Awaiting review</small>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <a href="{{ url_for('procurement.receiving_reports_index') }}" class="card-stat p-3 d-block text-decoration-none">
+            <span class="stat-label">Receiving Reports</span>
+            <h4 class="stat-val my-1 text-info">{{ pending_receiving }}</h4>
+            <small class="text-muted">Awaiting review</small>
+        </a>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <a href="{{ url_for('suppliers.index') }}" class="card-stat p-3 d-block text-decoration-none">
+            <span class="stat-label">Supplier Payments</span>
+            <h4 class="stat-val my-1 text-success">{{ payment_count }}</h4>
+            <small class="text-muted">Recorded payments</small>
+        </a>
+    </div>
 </div>
 
 <!-- Row 3: Interactive Analytics Charts -->

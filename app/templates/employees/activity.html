@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}System Audit Trail{% endblock %}
-{% block page_title %}Security &amp; Operations Audit Trail{% endblock %}
+{% block title %}Staff Activity{% endblock %}
+{% block page_title %}Staff Activity History{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
-        <h5 class="fw-bold mb-0">Employee Activity &amp; Audit Logs</h5>
-        <small class="text-muted">Immutable log of security authentications, inventory alterations, billing events, and price edits</small>
+        <h5 class="fw-bold mb-0">Staff Activity</h5>
+        <small class="text-muted">Individual authentication, procurement, inventory and billing history</small>
     </div>
     <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-people me-1"></i> Staff Directory
