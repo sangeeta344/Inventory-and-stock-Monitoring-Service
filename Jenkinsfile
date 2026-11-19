@@ -6,6 +6,10 @@ pipeline {
         timestamps()
     }
 
+    environment {
+        PYTHON = 'C:\\Users\\sangmesh\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+    }
+
     stages {
 
         stage('Checkout') {
@@ -16,20 +20,20 @@ pipeline {
 
         stage('Check Python') {
             steps {
-                bat 'python --version'
+                bat '"%PYTHON%" --version'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                bat 'python -m pip install --upgrade pip'
-                bat 'python -m pip install -r requirements.txt'
+                bat '"%PYTHON%" -m pip install --upgrade pip'
+                bat '"%PYTHON%" -m pip install -r requirements.txt'
             }
         }
 
         stage('Run Automated Tests') {
             steps {
-                bat 'python -m unittest discover -s tests -v'
+                bat '"%PYTHON%" -m unittest discover -s tests -v'
             }
         }
     }
