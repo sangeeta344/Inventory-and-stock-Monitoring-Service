@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app.models import db, Sale, SaleItem, Return, ReturnItem, Product
 from app.services.inventory_service import InventoryService
-from app.services.auth_service import log_audit
+from app.services.auth_service import log_audit, role_required
 
 return_bp = Blueprint('returns', __name__)
 
@@ -16,6 +16,7 @@ def index():
 
 @return_bp.route('/returns/search-sale')
 @login_required
+@role_required('CASHIER')
 def search_sale():
     invoice_number = request.args.get('invoice_number', '').strip()
     if not invoice_number:
@@ -55,6 +56,7 @@ def search_sale():
 
 @return_bp.route('/returns/new', methods=['GET', 'POST'])
 @login_required
+@role_required('CASHIER')
 def new_return():
     if request.method == 'POST':
         sale_id = request.form.get('sale_id', type=int)

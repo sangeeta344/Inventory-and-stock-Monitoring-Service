@@ -74,24 +74,6 @@
                             </div>
                         </div>
 
-                        <!-- Initial Stock (Add mode only) & Min Stock Level -->
-                        {% if not product %}
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-secondary">Opening Stock Quantity</label>
-                            <input type="number" min="0" name="initial_stock" class="form-control" value="0">
-                            <small class="text-muted">Units currently in warehouse</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-secondary">Initial Batch Number</label>
-                            <input type="text" name="batch_number" class="form-control" placeholder="Auto-generated if empty">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-semibold text-secondary">Batch Expiry Date</label>
-                            <input type="date" name="expiry_date" class="form-control">
-                            <small class="text-muted">Optional (FEFO tracking)</small>
-                        </div>
-                        {% endif %}
-
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold text-secondary">Minimum Stock Alert Level</label>
                             <input type="number" min="1" name="min_stock_level" class="form-control" value="{{ product.min_stock_level if product else '5' }}">

@@ -52,8 +52,9 @@ The system allows a supermarket owner to manage the entire store through **ONE c
 
 ### 7. Supplier & Purchase Management
 - Supplier directory with contact info, address, and payment terms.
-- Wholesale purchase orders with line items, cost prices, batch numbers, and expiry dates.
-- Automatic inventory increments upon marking goods as received.
+- Cashier stock requests with line items, cost prices, batch numbers, expiry dates, invoices, and suppliers.
+- Pending requests do not increase stock. Owners verify quantities and approve or reject each delivery.
+- Approved requests create FEFO inventory batches and stock movements in one database transaction.
 
 ### 8. Financial Accounting & Profit/Loss Analysis
 - **Product-Wise Gross Profit**: Computed from actual inventory batch acquisition costs (`Selling Price - Batch Unit Cost`).

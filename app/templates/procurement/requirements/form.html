@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}New Stock Requirement{% endblock %}
+{% block page_title %}New Stock Requirement{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm"><div class="card-body p-4">
+<form method="POST">
+<div class="table-responsive"><table class="table align-middle" id="requirementTable"><thead><tr><th>Product</th><th style="width:180px">Requested Quantity</th><th style="width:70px"></th></tr></thead><tbody><tr>
+<td><select name="product_id[]" class="form-select" required><option value="">Select product</option>{% for p in products %}<option value="{{ p.id }}">{{ p.name }} ({{ p.barcode }})</option>{% endfor %}</select></td>
+<td><input type="number" name="quantity[]" min="1" class="form-control" required></td><td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">Remove</button></td>
+</tr></tbody></table></div>
+<button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addRequirementRow()">Add Product</button>
+<div class="mb-3"><label class="form-label">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+<div class="text-end"><a href="{{ url_for('procurement.requirements_index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary">Submit Requirement</button></div>
+</form></div></div>
+<script>
+function addRequirementRow(){const tbody=document.querySelector('#requirementTable tbody');const row=tbody.rows[0].cloneNode(true);row.querySelectorAll('input').forEach(i=>i.value='');row.querySelectorAll('select').forEach(s=>s.selectedIndex=0);tbody.appendChild(row);}
+</script>
+{% endblock %}

@@ -15,6 +15,28 @@ class BarcodeScannerController {
         this.audioCtx = null;
     }
 
+    populateCameraSelect(selectId = 'camera-select') {
+        if (typeof Html5Qrcode === 'undefined' || !navigator.mediaDevices) return;
+        Html5Qrcode.getCameras().then(devices => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.innerHTML = '';
+            if (!devices.length) {
+                select.innerHTML = '<option value="environment">No camera available</option>';
+                return;
+            }
+            devices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.id;
+                option.textContent = device.label || `Camera ${index + 1}`;
+                select.appendChild(option);
+            });
+        }).catch(() => {
+            const select = document.getElementById(selectId);
+            if (select) select.innerHTML = '<option value="environment">Camera unavailable</option>';
+        });
+    }
+
     // Audio synthesizer beep for instant audio scan feedback
     playBeep() {
         try {
@@ -85,8 +107,12 @@ class BarcodeScannerController {
         };
 
         // Prefer back camera for smartphones ('environment')
+        const cameraConfig = /^[a-zA-Z0-9_-]+$/.test(cameraFacingMode) && cameraFacingMode !== 'environment'
+            ? { deviceId: { exact: cameraFacingMode } }
+            : { facingMode: cameraFacingMode };
+
         this.html5QrCode.start(
-            { facingMode: cameraFacingMode },
+            cameraConfig,
             config,
             qrCodeSuccessCallback,
             (errorMessage) => {

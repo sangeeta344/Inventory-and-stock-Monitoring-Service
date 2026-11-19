@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Supplier Payments{% endblock %}
+{% block page_title %}Supplier Payments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h5 class="fw-bold mb-0">{{ supplier.company_name }}</h5><a href="{{ url_for('procurement.supplier_invoice_new') }}" class="btn btn-outline-primary">New Supplier Invoice</a></div>
+<div class="card border-0 shadow-sm mb-3"><div class="card-body"><form method="POST" class="row g-2">
+<div class="col-md-3"><select name="purchase_id" class="form-select"><option value="">Purchase (optional)</option>{% for p in purchases %}<option value="{{ p.id }}">{{ p.invoice_number }} - ${{ "%.2f"|format(p.total_amount) }}</option>{% endfor %}</select></div>
+<div class="col-md-3"><select name="supplier_invoice_id" class="form-select"><option value="">Invoice (optional)</option>{% for inv in invoices %}<option value="{{ inv.id }}">{{ inv.invoice_number }} - ${{ "%.2f"|format(inv.total_amount) }}</option>{% endfor %}</select></div>
+<div class="col-md-2"><input type="date" name="payment_date" class="form-control"></div>
+<div class="col-md-2"><input type="number" name="amount" min="0.01" step="0.01" class="form-control" placeholder="Amount" required></div>
+<div class="col-md-2"><select name="payment_method" class="form-select"><option>BANK</option><option>CASH</option><option>CARD</option><option>CHEQUE</option><option>DIGITAL</option></select></div>
+<div class="col-md-3"><input name="reference_number" class="form-control" placeholder="Reference"></div>
+<div class="col-12"><textarea name="notes" class="form-control" rows="2" placeholder="Notes"></textarea></div>
+<div class="col-12 text-end"><button class="btn btn-primary">Record Payment</button></div>
+</form></div></div>
+<div class="table-responsive table-custom"><table class="table"><thead><tr><th>Date</th><th>Payment</th><th>Method</th><th>Reference</th><th class="text-end">Amount</th></tr></thead><tbody>{% for p in payments %}<tr><td>{{ p.payment_date }}</td><td>{{ p.payment_number }}</td><td>{{ p.payment_method }}</td><td>{{ p.reference_number or '-' }}</td><td class="text-end">${{ "%.2f"|format(p.amount) }}</td></tr>{% else %}<tr><td colspan="5" class="text-center text-muted py-3">No payments.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

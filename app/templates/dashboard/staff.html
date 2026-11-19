@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Staff Dashboard{% endblock %}
+{% block page_title %}Staff Operations{% endblock %}
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card-stat p-3"><span class="stat-label">My Requirements</span><h4 class="stat-val">{{ my_requirements }}</h4></div></div>
+    <div class="col-md-3"><div class="card-stat p-3"><span class="stat-label">Pending</span><h4 class="stat-val text-warning">{{ pending_requirements }}</h4></div></div>
+    <div class="col-md-3"><div class="card-stat p-3"><span class="stat-label">Receiving Reports</span><h4 class="stat-val">{{ my_reports }}</h4></div></div>
+    <div class="col-md-3"><div class="card-stat p-3"><span class="stat-label">Low / Out of Stock</span><h4 class="stat-val text-danger">{{ low_stock }} / {{ out_of_stock }}</h4></div></div>
+</div>
+<div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('procurement.requirement_new') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Create Requirement</a>
+    <a href="{{ url_for('procurement.requirements_index') }}" class="btn btn-outline-primary">My Requirements</a>
+    <a href="{{ url_for('procurement.receiving_reports_index') }}" class="btn btn-outline-secondary">Receiving Reports</a>
+    <a href="{{ url_for('inventory.alerts') }}" class="btn btn-outline-warning">Stock Alerts</a>
+    <a href="{{ url_for('billing.pos') }}" class="btn btn-outline-success">POS Billing</a>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Supplier Invoice{% endblock %}
+{% block page_title %}Supplier Invoice{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm"><div class="card-body p-4">
+<form method="POST" class="row g-3">
+<div class="col-md-4"><label class="form-label">Supplier</label><select name="supplier_id" class="form-select" required><option value="">Select supplier</option>{% for s in suppliers %}<option value="{{ s.id }}">{{ s.company_name }}</option>{% endfor %}</select></div>
+<div class="col-md-4"><label class="form-label">Purchase Order</label><select name="purchase_id" class="form-select"><option value="">None / unallocated</option>{% for p in purchases %}<option value="{{ p.id }}">{{ p.invoice_number }}</option>{% endfor %}</select></div>
+<div class="col-md-4"><label class="form-label">Invoice Number</label><input name="invoice_number" class="form-control" required></div>
+<div class="col-md-4"><label class="form-label">Invoice Date</label><input type="date" name="invoice_date" class="form-control"></div>
+<div class="col-md-4"><label class="form-label">Due Date</label><input type="date" name="due_date" class="form-control"></div>
+<div class="col-md-4"><label class="form-label">Total Amount</label><input type="number" step="0.01" min="0.01" name="total_amount" class="form-control" required></div>
+<div class="col-12 text-end"><a href="{{ url_for('suppliers.index') }}" class="btn btn-outline-secondary">Cancel</a><button class="btn btn-primary">Create Invoice</button></div>
+</form></div></div>
+{% endblock %}

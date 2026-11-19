@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Requirement {{ requirement.request_number }}{% endblock %}
+{% block page_title %}Stock Requirement{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm"><div class="card-header d-flex justify-content-between"><h5 class="mb-0">{{ requirement.request_number }}</h5><span class="badge bg-secondary">{{ requirement.status }}</span></div><div class="card-body">
+<div class="table-responsive"><table class="table"><thead><tr><th>Product</th><th>Requested</th><th>Approved</th><th>Adjustment Reason</th></tr></thead><tbody>{% for item in requirement.items %}
+<tr><td>{{ item.product.name }}</td><td>{{ item.original_quantity }} {{ item.unit }}</td><td>{{ item.approved_quantity if item.approved_quantity is not none else '-' }}</td><td>{{ item.quantity_adjustment_reason or '-' }}</td></tr>{% endfor %}</tbody></table></div>
+{% if requirement.status == 'PENDING' and current_user.is_owner %}
+<form method="POST" action="{{ url_for('procurement.requirement_approve', id=requirement.id) }}" class="border rounded p-3 mb-3">
+{% for item in requirement.items %}<div class="row g-2 mb-2"><div class="col-md-4"><strong>{{ item.product.name }}</strong></div><div class="col-md-3"><input type="number" name="approved_quantity_{{ item.id }}" value="{{ item.original_quantity }}" min="0" class="form-control"></div><div class="col-md-5"><input type="text" name="adjustment_reason_{{ item.id }}" class="form-control" placeholder="Adjustment reason if changed"></div></div>{% endfor %}
+<button class="btn btn-success">Approve</button></form>
+<form method="POST" action="{{ url_for('procurement.requirement_reject', id=requirement.id) }}" class="d-flex gap-2"><input name="rejection_reason" class="form-control" required placeholder="Rejection reason"><button class="btn btn-danger">Reject</button></form>
+{% endif %}
+{% if requirement.rejection_reason %}<div class="alert alert-danger mt-3">Rejected: {{ requirement.rejection_reason }}</div>{% endif %}
+</div></div>
+{% endblock %}

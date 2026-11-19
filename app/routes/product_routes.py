@@ -8,7 +8,7 @@ product_bp = Blueprint('products', __name__)
 
 @product_bp.route('/products')
 @login_required
-@role_required('OWNER')
+@role_required('OWNER', 'CASHIER')
 def list_products():
     category_id = request.args.get('category_id', type=int)
     search = request.args.get('search', '').strip()
@@ -52,7 +52,7 @@ def list_products():
 
 @product_bp.route('/products/add', methods=['GET', 'POST'])
 @login_required
-@role_required('OWNER')
+@role_required('CASHIER')
 def add_product():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -60,22 +60,13 @@ def add_product():
         barcode = request.form.get('barcode', '').strip()
         purchase_price = request.form.get('purchase_price', type=float, default=0.0)
         selling_price = request.form.get('selling_price', type=float, default=0.0)
-        initial_stock = request.form.get('initial_stock', type=int, default=0)
+        # Cashiers register catalog items only. Stock is always added through approved purchases.
+        initial_stock = 0
         min_stock_level = request.form.get('min_stock_level', type=int, default=5)
         unit_of_measure = request.form.get('unit_of_measure', 'pcs').strip()
         description = request.form.get('description', '').strip()
         is_active = bool(request.form.get('is_active', True))
         
-        # Initial batch details if initial stock > 0
-        batch_number = request.form.get('batch_number', '').strip() or f"INIT-{barcode[-6:]}"
-        expiry_date_str = request.form.get('expiry_date', '').strip()
-        expiry_date = None
-        if expiry_date_str:
-            try:
-                expiry_date = date.fromisoformat(expiry_date_str)
-            except ValueError:
-                pass
-
         # Validation
         if not name or not barcode or not category_id:
             flash('Product name, barcode, and category are required.', 'danger')
@@ -223,7 +214,7 @@ def delete_product(id):
 # Categories Management
 @product_bp.route('/categories', methods=['GET', 'POST'])
 @login_required
-@role_required('OWNER')
+@role_required('OWNER', 'CASHIER')
 def categories():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
